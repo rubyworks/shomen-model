@@ -1,17 +1,17 @@
-= Showmen Documentation Specification
+= Shomen Documentation Specification
 
 == Description
 
-Showmen defines a standarard documentation model for Ruby programs.
-The specification is a flat mapping that can either by saved in
-YAML or JSYNC format.
+Shomen defines a standarard documentation model for Ruby scripts.
+The specification is a flat mapping (no internal referencing) that can
+be stored in either YAML or JSYNC format.
 
 == Why?
 
-By using this standard, documentation parsing systesm have a single output
-target format to worry about. And documentation template systems have single
-standard input specificaton to use to generate output regardless of the 
-documentation parsing that was used.
+By using this standard, documentation parsing system have a single output
+target format to worry about. And documentation template systems have a single
+standard input specificaton to use regardless of the parsing system that was
+used.
 
 == Design By Example
 
@@ -55,10 +55,14 @@ in a project, as an example to elucidate the specification.
 
   end
 
+== Types
 
-== Script Type
+The Shomen spcification is a mapping of typed entries. The keys to the
+mapping are uniqe identifiers.
 
-The +script+ type provides information about a ruby script _file_.
+=== Script Type
+
+The +script+ type provides information about a ruby program _file_.
 
   "/musicstore/song.rb": {
       "!": "script",
@@ -73,7 +77,7 @@ The +script+ type provides information about a ruby script _file_.
       "methods": []
   }
 
-== Module Type
+=== Module Type
 
 The +module+ type describes a Ruby Module.
 
@@ -91,7 +95,7 @@ The +module+ type describes a Ruby Module.
       "methods": []
   }
 
-== Class Type
+=== Class Type
 
 The +class+ type describes a Ruby Class.
 
@@ -112,7 +116,7 @@ The +class+ type describes a Ruby Class.
 We left the +methods+ entry with an elipses as it would contain method-type
 entries for each of it's two methods. An example of which you can see below.
 
-== Constant Type
+=== Constant Type
 
 The +constant+ type describes a constant.
 
@@ -123,7 +127,7 @@ The +constant+ type describes a constant.
       "comment": "Where to store music store's configuration."
   }
 
-== Instance Method Type
+=== Instance Method Type
 
 The +method+ type describes an instance method.
 
@@ -147,7 +151,7 @@ The +method+ type describes an instance method.
       ]
   }
 
-== Functional Method Type
+=== Functional Method Type
 
 The +function+ type describes a class/module singleton method.
 
@@ -165,4 +169,62 @@ The +function+ type describes a class/module singleton method.
          }
       ]
   }
+
+== Fields
+
+== name
+
+Every entry type has a name field. This simply give the local name of
+the entry.
+
+== namepace
+
+Every entry type, with the expection of +script+, has a +namespace+.
+This gives the "nesting" of the entry within the code.
+
+== comment
+
+Every entry has a +comment+ field, which store the comment given just
+before the actual code for the entry.
+
+=== constants
+
+
+=== modules
+
+
+=== classes
+
+
+=== methods
+
+
+=== functions
+
+
+=== access
+
+The +method+ and +function+ types have +access+ which can either be
++public+, +protected+ or +private+.
+
+=== arguments
+
+The +arguments+ field is used by the +method+ and +function+ types. It is 
+a sequence describing the methods interface.
+
+=== return
+
+The +return+ field by the +method+ and +function+ types. It is a sequence of
+possible return values. Ususally there is only one entry in the array,
+but it is possble for there to be multiple ruturn values based on conditions
+within the methods. For example, am method might return a filename if the file
+exists, but +nil+ otherwise.
+
+
+== Guidelines for Parsers
+
+
+== Guidelines for Generators
+
+
 
