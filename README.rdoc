@@ -57,7 +57,7 @@ in a project, as an example to elucidate the specification.
 
 == Types
 
-The Shomen spcification is a mapping of typed entries. The keys to the
+The Shomen specification is a mapping of typed entries. The keys to the
 mapping are uniqe identifiers.
 
 === Script Type

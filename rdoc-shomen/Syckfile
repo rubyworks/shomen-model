@@ -1,0 +1,59 @@
+---
+email:
+  service : Email
+  file    : ~
+  subject : ~
+  mailto  : 
+    - ruby-talk@ruby-lang.org
+    - proutils@googlegroups.com
+  active  : true
+
+gemcutter:
+  service: GemCutter
+  active: true
+
+box:
+  service: Box
+  types  : [gem]
+  active : true
+
+rdoc:
+  service  : RDoc
+  template : redfish
+  include  : [ lib, README.rdoc, LICENSE ]
+  main     : ~
+  extra    : ~
+  output   : doc
+  active   : false
+
+ridoc:
+  service: RIDoc
+  include: ~
+  exclude: ~
+  output : ri
+  active : false
+
+dnote:
+  service  : DNote
+  files    : ~
+  labels   : ~
+  output   : ~
+  format   : ~
+  active   : true
+
+stats:
+  service  : Stats
+  title    : ~
+  loadpath : ~
+  exclude  : ~
+  output   : ~
+  active   : true
+
+vclog:
+  service  : VClog
+  format   : html   # xml, txt
+  layout   : rel    # gnu
+  typed    : false
+  output   : ~
+  active   : false
+

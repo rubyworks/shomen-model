@@ -1,0 +1,14 @@
+#!mast -x Syckle bin lib meta qed [A-Z]*
+lib/rdoc/c_parser_fix.rb
+lib/rdoc/discover.rb
+lib/shomen/core_ext/fileutils.rb
+lib/shomen/core_ext/rdoc.rb
+lib/shomen/core_ext/times.rb
+lib/shomen/rdoc/generator.rb
+lib/shomen/rdoc/metadata.rb
+lib/shomen/rdoc/template.rb
+lib/shomen/rdoc/timedelta.rb
+lib/shomen/rdoc.rb
+PROFILE
+README.rdoc
+VERSION

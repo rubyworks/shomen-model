@@ -1,0 +1,17 @@
+--- 
+title: RDoc Shomen Apdater
+suite: rubyworks
+summary: Standardized Ruby Documentation Format
+authors: Thomas Sawyer <transfire@gmail.com>
+created: 2010-07-01
+
+description:
+  Shomen defines a standardized documentaiton format for Ruby
+  programs which is used by other systems as a common source
+  for rendering.
+
+resources:
+  home: http://proutils.github.com/shomen
+  work: http://github.com/proutils/shomen
+  repo: git://github.com/proutils/shomen.git
+
