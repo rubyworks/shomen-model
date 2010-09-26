@@ -3,8 +3,11 @@
 == Description
 
 Shomen defines a standarard documentation model for Ruby scripts.
-The specification is a flat mapping (no internal referencing) that can
-be stored in either YAML or JSYNC format.
+The specification is a flat mapping, without internal referencing, that can
+be stored in either YAML or JSON format.
+
+(NOTE: An internally referential rendition may be provided too, in YAML and
+JSYNC.)
 
 == Why?
 
@@ -19,6 +22,8 @@ We will use the following script, which would be located at 'lib/musicstore/song
 in a project, as an example to elucidate the specification.
 
   # song.rb (c) 2010 John Doe
+
+  require 'fileutils'
 
   # Toplevel namespace for my MusicStore application.
   module MusicStore
@@ -60,22 +65,52 @@ in a project, as an example to elucidate the specification.
 The Shomen specification is a mapping of typed entries. The keys to the
 mapping are uniqe identifiers.
 
+=== Metadata Type
+
+The +metadata+ entry provides general information about the library or
+application being documented, such as it's name, description and current
+version. There will be only one +metadata+ entry in a given Shomen file,
+thus it's index is the fixed key, "<code>(metadata)</code>".
+
+  "(metadata)": {
+      "!"           : "metadata",
+      "name"        : "song",
+      "title"       : "Song Program",
+      "summary"     : "Program for Playing Songs"
+      "description" : "Play songs the easy way using song.rb!"
+      "created"     : "!date 2010-10-10"
+  }
+
+=== File Type
+
+The +file+ type is used to house non-Ruby documentation documents, such as
+a README. It's structure is very basic.
+
+  "/README.rdoc": {
+    "name"        : "README.rdoc",
+    "path"        : "",
+    "mtime"       : "2010-10-10 11:11:10",
+    "text"        : "= Music Store README\n ..."
+  }
+
 === Script Type
 
 The +script+ type provides information about a ruby program _file_.
 
   "/musicstore/song.rb": {
-      "!": "script",
-      "name": "song.rb",
-      "path": "musicstore",
-      "header": "song.rb (c) 2010 John Doe",
-      "footer": "",
-      "requires": [],
-      "constants": [],
-      "modules": ["MusicStore"],
-      "classes": [],
-      "functions": [],
-      "methods": []
+      "!"         : "script",
+      "name"      : "song.rb",
+      "path"      : "musicstore",
+      "loadpath"  : "lib",
+      "mtime"     : "2010-10-10 11:11:10",
+      "header"    : "song.rb (c) 2010 John Doe",
+      "footer"    : "",
+      "requires"  : ["fileutils"],
+      "constants" : ["MusicStore::CONFIG_DIRECTORY"],
+      "modules"   : ["MusicStore", "MusicStore::MusicMixin"],
+      "classes"   : ["MusicStore::Song"],
+      "functions" : ["MusicStore.config_directory"],
+      "methods"   : ["MusicStore::MusicMixin#play", "MusicStore::MusicMixin#artist"]
   }
 
 === Module Type
@@ -83,17 +118,17 @@ The +script+ type provides information about a ruby program _file_.
 The +module+ type describes a Ruby Module.
 
   "MusicStore": {
-      "!": "module",
-      "name": "MusicStore",
-      "namespace": "",
-      "includes": [],
-      "extended": [],
-      "comment": "Common methods for MusicStore classes.",
-      "constants": ["CONFIG_DIRECTORY"],
-      "modules": ["SongMixin"],
-      "classes": ["Song"],
-      "functions": [],
-      "methods": []
+      "!"         : "module",
+      "name"      : "MusicStore",
+      "namespace" : "",
+      "includes"  : [],
+      "extended"  : [],
+      "comment"   : "Common methods for MusicStore classes.",
+      "constants" : ["CONFIG_DIRECTORY"],
+      "modules"   : ["MusicStore::MusicMixin"],
+      "classes"   : ["MusicStore::Song"],
+      "functions" : [],
+      "methods"   : []
   }
 
 === Class Type
@@ -101,17 +136,17 @@ The +module+ type describes a Ruby Module.
 The +class+ type describes a Ruby Class.
 
   "MusicStore::Song": {
-      "!": "class",
-      "name": "Song",
-      "namespace": "MusicStore",
-      "includes": ["SongMixin"],
-      "extended": [],
-      "comment": "This is the Song class.",
-      "constants": [],
-      "modules": [],
-      "classes": [],
-      "functions": [],
-      "methods": ["artist", "play"]
+      "!"         : "class",
+      "name"      : "Song",
+      "namespace" : "MusicStore",
+      "includes"  : ["MusicStore::SongMixin"],
+      "extended"  : [],
+      "comment"   : "This is the Song class.",
+      "constants" : [],
+      "modules"   : [],
+      "classes"   : [],
+      "functions" : [],
+      "methods"   : ["MusicStore::Song#artist", "MusicStore::Song#play"]
   }
 
 We left the +methods+ entry with an elipses as it would contain method-type
@@ -122,10 +157,10 @@ entries for each of it's two methods. An example of which you can see below.
 The +constant+ type describes a constant.
 
   "MusicStore::CONFIG_DIRECTORY": {
-      "!": "constant",
-      "name": "CONFIG_DIRECTORY",
-      "namespace": "MusicStore"
-      "comment": "Where to store music store's configuration."
+      "!"         : "constant",
+      "name"      : "CONFIG_DIRECTORY",
+      "namespace" : "MusicStore"
+      "comment"   : "Where to store music store's configuration."
   }
 
 === Method Type
@@ -133,24 +168,26 @@ The +constant+ type describes a constant.
 The +method+ type describes an instance method.
 
   "MusicStore::Song#play": {
-      "!": "method",
-      "name": "play",
-      "namespace": "MusicStore::Song",
-      "comment": "Play the song.",
-      "access": public
-      "interface": [
+      "!"         : "method",
+      "name"      : "play",
+      "namespace" : "MusicStore::Song",
+      "comment"   : "Play the song.",
+      "access"    : "public"
+      "literal_interface": "(seconds=nil)",
+      "interface" : [
         'play(seconds=nil)'
       ],
-      "arguments": [
+      "arguments" : [
         {
-          "name": "seconds",
-          "comment": "number of seconds to playback"
+          "name"    : "seconds",
+          "comment" : "number of seconds to playback"
         }
       ]
-      "returns": [
+      "parameters": []
+      "returns"   : [
          {
-           "type": "Integer",
-           "comment": "forked process id"
+           "type"    : "Integer",
+           "comment" : "forked process id"
          }
       ]
   }
@@ -163,13 +200,16 @@ used as a way to better conceptualize the character of class singleton
 methods.
 
   "MusicStore::Song.config_directory": {
-      "!": "function",
-      "name": "config_directory",
-      "namespace": "MusicStore",
-      "comment": "Overridable setting for configuration directory.",
-      "access": public
-      "arguments": []
-      "returns": [
+      "!"         : "function",
+      "name"      : "config_directory",
+      "namespace" : "MusicStore",
+      "comment"   : "Overridable setting for configuration directory.",
+      "access"    : "public",
+      "arguments" : [],
+      "parameters": [],
+      "literal_interface": "()",
+      "interface" : [],
+      "returns"   : [
          {
            "type": "String",
            "comment": "configuration directory"
