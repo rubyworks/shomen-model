@@ -1,0 +1,154 @@
+<html>
+<head>
+  <title>API</title>
+  <style>
+    .box { border: 1px solid green; background: white; padding: 20px; }
+    button.link { border: none; background: transparent; }
+  </style>
+  <script type="text/javascript" src="jquery.js"></script>
+  <script type="text/javascript" src="jquery.jqote2.min.js"></script>
+  <script>
+    $(document).ready(function(){
+
+      $.getJSON('rdoc.json', function(data) {
+
+        $.each(data, function(key, value) {
+          type = value['!'];
+          switch(type) {
+          case 'function':
+            $('#methods').append(
+              $('#template-method-link').jqote(value)
+            );
+            $('#infobox').append(
+              $('#template-method-info').jqote(value)
+            );
+            break;
+          case 'method':
+            $('#methods').append(
+              $('#template-method-link').jqote(value)
+            );
+            $('#infobox').append(
+              $('#template-method-info').jqote(value)
+            );
+            break;
+          case 'class':
+            $('#classes').append(
+              $('#template-module-link').jqote(value)
+            );
+            $('#infobox').append(
+              $('#template-module-info').jqote(value)
+            );
+            break;
+          case 'module':
+            $('#classes').append(
+              $('#template-module-link').jqote(value)
+            );
+            $('#infobox').append(
+              $('#template-module-info').jqote(value)
+            );
+            break;
+          case 'file':
+            $('#files').append(
+              $('#template-file-link').jqote(value)
+            );
+            $('#infobox').append(
+              $('#template-file-info').jqote(value)
+            );
+            break;
+          case 'script':
+            $('#files').append(
+              $('#template-file-link').jqote(value)
+            );
+            $('#infobox').append(
+              $('#template-file-info').jqote(value)
+            );
+            break;
+          };
+
+        });
+
+      });
+
+    });
+  </script>
+</head>
+<body>
+
+  <table>
+    <tr>
+      <th>Files</th>
+      <th>Classes</th>
+      <th>Methods</th>
+    </tr>
+    <tr>
+      <td id="files">
+      </td>
+      <td id="classes">
+      </td>
+      <td id="methods">
+      </td>
+    </tr>
+  </table>
+
+  <div id="infobox">
+  </div>
+
+</body>
+</html>
+
+<script type="text/x-jqote-template" id="template-method-link">
+  <![CDATA[
+    <button class="link" onclick="$('#api-method-<%= this.name %>').toggle();"><%= this.name %></button>
+  ]]>
+</script>
+
+<script type="text/x-jqote-template" id="template-method-info">
+  <![CDATA[
+    <div class="box" id="api-method-<%= this.name %>" style="display: none;">
+      <div style="float: right">
+        <button class="link" onclick="$('#api-method-<%= this.name %>').hide();">X</button>
+      </div>
+
+      <h2><%= this.name %></h2>
+      <p><%= this.comment %></p>
+    </div>
+  ]]>
+</script>
+
+<script type="text/x-jqote-template" id="template-module-link">
+  <![CDATA[
+    <button class="link" onclick="$('#api-module-<%= this.name %>').toggle();"><%= this.name %></button>
+  ]]>
+</script>
+
+<script type="text/x-jqote-template" id="template-module-info">
+  <![CDATA[
+    <div class="box" id="api-module-<%= this.name %>" style="display: none;">
+      <div style="float: right">
+        <button class="link" onclick="$('#api-module-<%= this.name %>').hide();">X</button>
+      </div>
+
+      <h2><%= this.name %></h2>
+      <p><%= this.comment %></p>
+    </div>
+  ]]>
+</script>
+
+<script type="text/x-jqote-template" id="template-file-link">
+  <![CDATA[
+    <button class="link" onclick="$('#api-file-<%= this.name %>').toggle();"><%= this.name %></button>
+  ]]>
+</script>
+
+<script type="text/x-jqote-template" id="template-file-info">
+  <![CDATA[
+    <div class="box" id="api-file-<%= this.name %>" style="display: none;">
+      <div style="float: right">
+        <button class="link" onclick="$('#api-file-<%= this.name %>').hide();">X</button>
+      </div>
+      <h2><%= this.name %></h2>
+      <p><%= this.comment %></p>
+    </div>
+  ]]>
+</script>
+
