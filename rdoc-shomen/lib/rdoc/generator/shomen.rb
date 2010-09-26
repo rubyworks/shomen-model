@@ -7,6 +7,8 @@
 #rescue
 #end
 
+require "rdoc/rdoc"
+
 #if Gem.available? "json"
 #  gem "json", ">= 1.1.3"
 #else
@@ -14,7 +16,7 @@
 #end
 #require 'json'
 
-#require 'fileutils'
+require 'fileutils'
 require 'pp'
 require 'pathname'
 require 'yaml'
@@ -24,555 +26,531 @@ require 'rdoc/rdoc'
 require 'rdoc/generator'
 require 'rdoc/generator/markup'
 
-require 'shomen/core_ext/rdoc'
-require 'shomen/core_ext/times'
-require 'shomen/core_ext/fileutils'
+#require 'shomen/core_ext/times'
 
-require 'shomen/rdoc/metadata'
+require 'rdoc-shomen/metadata'
 #require 'shomen/rdoc/template'
 
+# TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
+def fileutils
+  $dryrun ? FileUtils::DryRun : FileUtils
+end
+
 #
-module Shomen
+class RDoc::Generator::Shomen
+
+  RDoc::RDoc.add_generator self
+
+  #PATH = Pathname.new(File.join(LOADPATH, 'rdazzle', 'generators'))
+
+  #include ERB::Util
+  include RDocShomen::Metadata
 
   #
-  class RDocGenerator
+  # C O N S T A N T S
+  #
 
-    #PATH = Pathname.new(File.join(LOADPATH, 'rdazzle', 'generators'))
+  #PATH = Pathname.new(File.dirname(__FILE__))
 
-    #include ERB::Util
-    include Metadata
+  # Directory where generated classes live relative to the root
+  # TODO: Fix in future version when RDoc fixes.
+  CLASS_DIR = nil #'classes'
 
-    #
-    # C O N S T A N T S
-    #
+  # Directory where generated files live relative to the root
+  # TODO: Fix in future version when RDoc fixes.
+  FILE_DIR = nil #'files'
 
-    #PATH = Pathname.new(File.dirname(__FILE__))
+  # Standard generator factory method.
+  def self.for(options)
+    new(options)
+  end
 
-    # Common template directory.
-    #PATH_STATIC = PATH + 'abstract/static'
+  # User options from the command line.
+  attr :options
 
-    # Common template directory.
-    #PATH_TEMPLATE = PATH + 'abstract/template'
+  # Get title from options or metadata.
+  #def title
+  #  @title ||= (
+  #    if options.title == "API Reference"
+  #      metadata.title || "API Reference"
+  #    else
+  #      options.title
+  #    end
+  #  )
+  #end
 
-    # Directory where generated classes live relative to the root
-    # TODO: Fix in future version when RDoc fixes.
-    CLASS_DIR = nil #'classes'
+  # FIXME: Pull copyright from project.
+  #def copyright
+  #  #metadata.copyright || "&copy; #{Time.now.strftime('Y')}"
+  #  "(c) 2009".sub("(c)", "&copy;")
+  #end
 
-    # Directory where generated files live relative to the root
-    # TODO: Fix in future version when RDoc fixes.
-    FILE_DIR = nil #'files'
+  # List of all classes and modules.
+  #def all_classes_and_modules
+  #  @all_classes_and_modules ||= RDoc::TopLevel.all_classes_and_modules
+  #end
 
-    # Directory where static assets are located in the template
-    DIR_ASSETS = 'assets'
+  # In the world of the RDoc Generators #classes is the same as 
+  # #all_classes_and_modules. Well, except that its sorted too.
+  # For classes sans modules, see #types.
 
-    #
-    # C L A S S   M E T H O D S
-    #
+  def classes
+    @classes ||= RDoc::TopLevel.all_classes_and_modules.sort
+  end
 
-    #def self.inherited(base)
-    #  ::RDoc::RDoc.add_generator(base)
-    #end
+  # Only toplevel classes and modules.
 
-    #
-    #def self.include(*mods)
-    #  comps, mods = *mods.partition{ |m| m < Component }
-    #  components.concat(comps)
-    #  super(*mods)
-    #end
+  def classes_toplevel
+    @classes_toplevel ||= classes.select {|klass| !(RDoc::ClassModule === klass.parent) }
+  end
 
-    #
-    #def self.components
-    #  @components ||= []
-    #end
+  # Documented classes and modules sorted by salience first, then by name.
 
-    # Standard generator factory method.
-    def self.for(options)
-      new(options)
+  def classes_salient
+    @classes_salient ||= sort_salient(classes)
+  end
+
+  #
+
+  def classes_hash
+    @classes_hash ||= RDoc::TopLevel.modules_hash.merge(RDoc::TopLevel.classes_hash)
+  end
+
+  #
+
+  def modules
+    @modules ||= RDoc::TopLevel.modules.sort
+  end
+
+  #
+
+  def modules_toplevel
+    @modules_toplevel ||= modules.select {|klass| !(RDoc::ClassModule === klass.parent) }
+  end
+
+  #
+
+  def modules_salient
+    @modules_salient ||= sort_salient(modules)
+  end
+
+  #
+
+  def modules_hash
+    @modules_hash ||= RDoc::TopLevel.modules_hash
+  end
+
+  #
+
+  def types
+    @types ||= RDoc::TopLevel.classes.sort
+  end
+
+  #
+
+  def types_toplevel
+    @types_toplevel ||= types.select {|klass| !(RDoc::ClassModule === klass.parent) }
+  end
+
+  #
+
+  def types_salient
+    @types_salient ||= sort_salient(types)
+  end
+
+  #
+
+  def types_hash
+    @types_hash ||= RDoc::TopLevel.classes_hash
+  end
+
+  #
+
+  def files
+    @files ||= RDoc::TopLevel.files
+  end
+
+  # List of toplevel files. RDoc supplies this via the #generate method.
+
+  def files_toplevel
+    @files_toplevel ||= (
+      @files_rdoc.select{ |f| f.parser == RDoc::Parser::Simple }
+    )
+  end
+
+  #
+
+  def files_hash
+    @files ||= RDoc::TopLevel.files_hash
+  end
+
+  # List of all methods in all classes and modules.
+  def methods_all
+    @methods_all ||= classes.map{ |m| m.method_list }.flatten.sort
+  end
+
+  #
+  #def find_class_named(*a,&b)
+  #  RDoc::TopLevel.find_class_named(*a,&b) || RDoc::TopLevel.find_module_named(*a,&b)
+  #end
+
+  ##
+  #def find_module_named(*a,&b)
+  #  RDoc::TopLevel.find_module_named(*a,&b)
+  #end
+
+  ##
+  #def find_type_named(*a,&b)
+  #  RDoc::TopLevel.find_class_named(*a,&b)
+  #end
+
+  #
+  #def find_file_named(*a,&b)
+  #  RDoc::TopLevel.find_file_named(*a,&b)
+  #end
+
+  ## TODO: What's this then?
+  #def json_creatable?
+  #  RDoc::TopLevel.json_creatable?
+  #end
+
+  # RDoc needs this to function.
+
+  def class_dir ; CLASS_DIR ; end
+
+  # RDoc needs this to function.
+
+  def file_dir  ; FILE_DIR ; end
+
+  # Build the initial indices and output objects
+  # based on an array of top level objects containing
+  # the extracted information.
+
+  def generate(files)
+    @files_rdoc = files.sort
+
+    @table = {}
+
+    generate_constants(@table)
+    generate_classes(@table)
+    generate_methods(@table)
+    generate_scripts(@table)   # have to do this last b/c it depends on the others
+    #generate_files(@table)
+
+#pp table #.select{ |k, h| h['!'] == 'script' }
+
+    #file = File.join(@path_output, 'rdoc.jsync')
+
+    yaml = @table.to_yaml
+    File.open('rdoc.yaml', 'w'){ |f| f << yaml }
+
+    json = JSON.generate(@table)
+    File.open('rdoc.json', 'w') do |f|
+      f << json
     end
 
-    #
-    #  I N S T A N C E   M E T H O D S
-    #
-
-    # User options from the command line.
-
-    attr :options
-
-    # Get title from options or metadata.
-
-    def title
-      @title ||= (
-        if options.title == "RDoc Documentation"
-          metadata.title || "RDoc Documentation"
-        else
-          options.title
-        end
-      )
-    end
-
-    # FIXME: Pull copyright from project.
-    def copyright
-      #metadata.copyright || "&copy; #{Time.now.strftime('Y')}"
-      "(c) 2009".sub("(c)", "&copy;")
-    end
-
-    # List of all classes and modules.
-    #def all_classes_and_modules
-    #  @all_classes_and_modules ||= RDoc::TopLevel.all_classes_and_modules
-    #end
-
-    # In the world of the RDoc Generators #classes is the same as 
-    # #all_classes_and_modules. Well, except that its sorted too.
-    # For classes sans modules, see #types.
-
-    def classes
-      @classes ||= RDoc::TopLevel.all_classes_and_modules.sort
-    end
-
-    # Only toplevel classes and modules.
-
-    def classes_toplevel
-      @classes_toplevel ||= classes.select {|klass| !(RDoc::ClassModule === klass.parent) }
-    end
-
-    # Documented classes and modules sorted by salience first, then by name.
-
-    def classes_salient
-      @classes_salient ||= sort_salient(classes)
-    end
-
-    #
-
-    def classes_hash
-      @classes_hash ||= RDoc::TopLevel.modules_hash.merge(RDoc::TopLevel.classes_hash)
-    end
-
-    #
-
-    def modules
-      @modules ||= RDoc::TopLevel.modules.sort
-    end
-
-    #
-
-    def modules_toplevel
-      @modules_toplevel ||= modules.select {|klass| !(RDoc::ClassModule === klass.parent) }
-    end
-
-    #
-
-    def modules_salient
-      @modules_salient ||= sort_salient(modules)
-    end
-
-    #
-
-    def modules_hash
-      @modules_hash ||= RDoc::TopLevel.modules_hash
-    end
-
-    #
-
-    def types
-      @types ||= RDoc::TopLevel.classes.sort
-    end
-
-    #
-
-    def types_toplevel
-      @types_toplevel ||= types.select {|klass| !(RDoc::ClassModule === klass.parent) }
-    end
-
-    #
-
-    def types_salient
-      @types_salient ||= sort_salient(types)
-    end
-
-    #
-
-    def types_hash
-      @types_hash ||= RDoc::TopLevel.classes_hash
-    end
-
-    #
-
-    def files
-      @files ||= RDoc::TopLevel.files
-    end
-
-    # List of toplevel files. RDoc supplies this via the #generate method.
-
-    def files_toplevel
-      @files_toplevel ||= (
-        @files_rdoc.select{ |f| f.parser == RDoc::Parser::Simple }
-      )
-    end
-
-    #
-
-    def files_hash
-      @files ||= RDoc::TopLevel.files_hash
-    end
-
-    # List of all methods in all classes and modules.
-
-    def methods_all
-      @methods_all ||= classes.map{ |m| m.method_list }.flatten.sort
-    end
-
-    #
-
-    def find_class_named(*a,&b)
-      RDoc::TopLevel.find_class_named(*a,&b) || RDoc::TopLevel.find_module_named(*a,&b)
-    end
-
-    #
-
-    def find_module_named(*a,&b)
-      RDoc::TopLevel.find_module_named(*a,&b)
-    end
-
-    #
-
-    def find_type_named(*a,&b)
-      RDoc::TopLevel.find_class_named(*a,&b)
-    end
-
-    #
-
-    def find_file_named(*a,&b)
-      RDoc::TopLevel.find_file_named(*a,&b)
-    end
-
-    # TODO: What's this then?
-
-    def json_creatable?
-      RDoc::TopLevel.json_creatable?
-    end
-
-    # RDoc needs this to function.
-
-    def class_dir ; CLASS_DIR ; end
-
-    # RDoc needs this to function.
-
-    def file_dir  ; FILE_DIR ; end
-
-    # Build the initial indices and output objects
-    # based on an array of top level objects containing
-    # the extracted information.
-
-    def generate(files)
-      @files_rdoc = files.sort
-
-      jsync = {}
-
-      generate_files(jsync)
-      generate_classes(jsync)
-      #generate_constants(jsync)
-      generate_methods(jsync)
-
-#pp jsync
-
-      #file = File.join(@path_output, 'rdoc.jsync')
-
-      yaml = jsync.to_yaml
-      File.open('rdoc.yaml', 'w'){ |f| f << yaml }
-
-      json = JSON.generate(jsync)
-      File.open('rdoc.jsync', 'w') do |f|
-        f << json
-      end
-
-    #rescue StandardError => err
-    #  debug_msg "%s: %s\n  %s" % [ err.class.name, err.message, err.backtrace.join("\n  ") ]
-    #  raise err
-    end
-
-    # Components may need to define a method on
-    # the rendering context.
-
-    def provision(method, &block)
-      #if block
-        #@provisions[method] = block
-        (class << self; self; end).class_eval do
-          define_method(method) do |*a, &b|
-            block.call(*a, &b)
-          end
-        end
-      #else
-      #  @provisions[method] = lambda do |*a, &b|
-      #    __send__(method, *a, &b)
-      #  end
-      #end
-    end
-
-  protected
-
-    #
-
-    def sort_salient(classes)
-      nscounts = classes.inject({}) do |counthash, klass|
-        top_level = klass.full_name.gsub( /::.*/, '' )
-        counthash[top_level] ||= 0
-        counthash[top_level] += 1
-        counthash
-      end
-      # Sort based on how often the top level namespace occurs, and then on the
-      # name of the module -- this works for projects that put their stuff into
-      # a namespace, of course, but doesn't hurt if they don't.
-      classes.sort_by do |klass|
-        top_level = klass.full_name.gsub( /::.*/, '' )
-        [nscounts[top_level] * -1, klass.full_name]
-      end.select do |klass|
-        klass.document_self
+    ref_table = reference_table(@table)
+
+    yaml  = ref_table.to_yaml
+    File.open('rdoc2.yaml', 'w'){ |f| f << yaml }
+    
+    # TODO: JSYNC
+
+  #rescue StandardError => err
+  #  debug_msg "%s: %s\n  %s" % [ err.class.name, err.message, err.backtrace.join("\n  ") ]
+  #  raise err
+  end
+
+  #
+  def reference_table(table)
+    debug_msg "== Generating Reference Table"
+    new_table = {}
+    table.each do |key, entry|
+      debug_msg "%s" % [key]
+      data = entry.dup
+      new_table[key] = data
+      case data['!']
+      when 'script'
+        data["constants"]  = ref_list(data["constants"])
+        data["modules"]    = ref_list(data["modules"])
+        data["classes"]    = ref_list(data["classes"])
+        data["functions"]  = ref_list(data["functions"])
+        data["methods"]    = ref_list(data["methods"])
+      when 'file'
+      when 'constant'
+        data["namespace"]  = ref_item(data["namespace"])
+      when 'module', 'class'
+        data["namespace"]  = ref_item(data["namespace"])
+        data["includes"]   = ref_list(data["includes"])
+        #data["extended"]  = ref_list(data["extended"])
+        data["constants"]  = ref_list(data["constants"])
+        data["modules"]    = ref_list(data["modules"])
+        data["classes"]    = ref_list(data["classes"])
+        data["functions"]  = ref_list(data["functions"])
+        data["methods"]    = ref_list(data["methods"])
+        data["files"]      = ref_list(data["files"])
+        data["superclass"] = ref_item(data["superclass"]) if data.key?("superclass")
+      when 'method', 'function'
+        data["parent"]     = ref_item(data["parent"])
+        data["file"]       = ref_item(data["file"])
       end
     end
+    new_table
+  end
 
-    #
-    # Initialization
-    #
+  #
+  def ref_item(key)
+    @table[key] || key
+  end
 
-    def initialize(options)
-      @options = options
-      #@options.diagram = false  # why?
+  #
+  def ref_list(keys)
+    keys.map{ |k| @table[k] || k }
+  end
 
-      @path_base   = Pathname.pwd.expand_path
-      @path_output = Pathname.new(@options.op_dir).expand_path(@path_base)
+protected
 
-      @provisions = {}
+  #
 
-      #initialize_template
-      #initialize_methods
-      #initialize_components
+  def sort_salient(classes)
+    nscounts = classes.inject({}) do |counthash, klass|
+      top_level = klass.full_name.gsub( /::.*/, '' )
+      counthash[top_level] ||= 0
+      counthash[top_level] += 1
+      counthash
     end
-
-    #
-    #def initialize_template
-    #  @template = @options.template #|| DEFAULT_TEMPLATE
-    #  raise RDoc::Error, "could not find template #{template.inspect}" unless path_template.directory?
-    #end
-
-    # Overide this method to set up any rendering provisions.
-    #def initialize_methods
-    #end
-
-    #
-    #def initialize_components
-    #  @components = []
-    #  self.class.components.each do |comp|
-    #    @components << comp.new(self)
-    #  end
-    #end
-
-    # Component instances.
-    #attr :components
-
-    # Component provisions.
-    #attr :provisions
-
-    # The template type selected to be generated.
-    #attr :template
-
-    # Current pathname.
-    attr :path_base
-
-    # The output path.
-    attr :path_output
-
-    # Path to the static files. This should be defined in the
-    # subclass as:
-    #
-    #  def path
-    #   @path ||= Pathname.new(__FILE__).parent
-    #  end
-    #
-    def path
-      raise "Must be implemented by subclass!"
+    # Sort based on how often the top level namespace occurs, and then on the
+    # name of the module -- this works for projects that put their stuff into
+    # a namespace, of course, but doesn't hurt if they don't.
+    classes.sort_by do |klass|
+      top_level = klass.full_name.gsub( /::.*/, '' )
+      [nscounts[top_level] * -1, klass.full_name]
+    end.select do |klass|
+      klass.document_self
     end
+  end
 
-    # Path to static files. This is <tt>path + 'static'</tt>.
-    def path_static
-      Pathname.new(LOADPATH + "/rdazzle/generators/#{template}/static")
-      #path + '#{template}/static'
+  #
+  def initialize(options)
+    @options = options
+    #@options.diagram = false  # why?
+    #@reference = options.reference
+
+    @path_base   = Pathname.pwd.expand_path
+    @path_output = Pathname.new(@options.op_dir).expand_path(@path_base)
+  end
+
+  #
+  def reference?
+    @reference
+  end
+
+  # Current pathname.
+  attr :path_base
+
+  # The output path.
+  attr :path_output
+
+  # Path to static files. This is <tt>path + 'static'</tt>.
+  #def path_static
+  #  Pathname.new(LOADPATH + "/rdazzle/generators/#{template}/static")
+  #  #path + '#{template}/static'
+  #end
+
+  # Path to static files. This is <tt>path + 'template'</tt>.
+  #def path_template
+  #  Pathname.new(LOADPATH + "/rdazzle/generators/#{template}/template")
+  #  #path + '#{template}/template'
+  #end
+
+  #
+  def path_output_relative(path=nil)
+    if path
+      path.to_s.sub(path_base.to_s+'/', '')
+    else
+      @path_output_relative ||= path_output.to_s.sub(path_base.to_s+'/', '')
     end
+  end
 
-    # Path to static files. This is <tt>path + 'template'</tt>.
-    def path_template
-      Pathname.new(LOADPATH + "/rdazzle/generators/#{template}/template")
-      #path + '#{template}/template'
-    end
-
-    #
-    def path_output_relative(path=nil)
-      if path
-        path.to_s.sub(path_base.to_s+'/', '')
-      else
-        @path_output_relative ||= path_output.to_s.sub(path_base.to_s+'/', '')
-      end
-    end
-
-    # Prepare generator.
-
-    def generate_setup
-    end
-
-    # Generate a documentation file for each file
-    def generate_files(jsync)
-      debug_msg "Generating file documentation in #{path_output_relative}:"
-      #templatefile = self.path_template + 'file.rhtml'
-
-      files.each do |file|
-        debug_msg "working on %s" % [file.full_name]
-
-        #rel_prefix  = self.path_output.relative_path_from(outfile.dirname)
-        #context     = binding()
-        #debug_msg "rendering #{path_output_relative(outfile)}"
-
-        #"/musicstore/song.rb": {
-        #    "!": "script",
-        #    "name": "song.rb",
-        #    "path": "musicstore",
-        #    "header": "song.rb (c) 2010 John Doe",
-        #    "footer": "",
-        #    "constants": [],
-        #    "modules": ["MusicStore"],
-        #    "classes": [],
-        #    "functions": [],
-        #    "methods": []
-        #}
-
-        jsync[file.name] = {
-          "!"          => "script",
-          "name"       => File.basename(file.name),
-          "path"       => File.dirname(file.name),
-          "header"     => "", # TODO
-          "footer"     => "", # TODO
-          "requires"   => file.requires.map{ |r| r.name },
-          "constants"  => file.constants.map{ |r| c.full_name },
-          "modules"    => [],
-          "classes"    => [],
-          "functions"  => [],
-          "methods"    => []
-        }
-
-        #self.render_template(templatefile, outfile, :file=>file, :rel_prefix=>rel_prefix)
-      end
-      return jsync
-    end
-
-    # Generate a documentation file for each class
-    def generate_classes(jsync)
-      debug_msg "Generating class documentation:"
-
-      classes.each do |c|
-        debug_msg "working on %s (%s)" % [ c.full_name, c.path ]
-        #outfile    = self.path_output + klass.path
-        #rel_prefix = self.path_output.relative_path_from(outfile.dirname)
-        #debug_msg "rendering #{path_output_relative(outfile)}"
-        #self.render_template(templatefile, outfile, :klass=>klass, :rel_prefix=>rel_prefix)
-
-        data = {}
-        data["!"]         = (c.type == 'class' ? "class" : "module")
-        data["name"]      = c.name
-        data["namespace"] = c.full_name  # TODO
-        data["includes"]  = c.includes.map{ |x| x.name }
-        data["extended"]  = []
-        data["comment"]   = c.description
-        data["constants"] = c.constants.map{ |x| x.name }
-        data["modules"]   = c.modules.map{ |x| x.name }
-        data["classes"]   = c.classes.map{ |x| x.name }
-        data["functions"] = collect_methods(c, true)
-        data["methods"]   = collect_methods(c, false)
-        jsync[c.full_name] = data
-      end
-      return jsync
-    end
-
-    # TODO: include value?
-    def generate_constants(jsync)
-      debug_msg "Generating constant documentation:"
-      constants.each do |c|
-        debug_msg "working on %s (%s)" % [c.full_name, c.path]
-        jsync[c.full_name] = {
+  #
+  def generate_constants(table)
+    debug_msg "Generating constant documentation:"
+    classes.each do |base|
+      base.constants.each do |c|
+        full_name = "#{base.full_name}::#{c.name}"
+        debug_msg "%s" % [full_name]
+        table[full_name] = {
           "!"         => "constant",
           "name"      => c.name,
-          "namespace" => c.full_name, # TODO
-          "comment"   => c.description
+          "namespace" => "#{base.full_name}",
+          "comment"   => c.comment, # description
+          "value"     => c.value
         }
       end
-      return jsync     
     end
+    return table     
+  end
 
-    def generate_methods(jsync)
-      debug_msg "Generating method documentation:"
-      methods_all.each do |m|
-        debug_msg "%s" % [m.full_name]
-        jsync[m.full_name] = {
-          '!'            => (m.singleton ? 'function' : 'method'),
-          'name'         => m.name,
-          'namespace'    => m.parent_name,
-          'comment'      => m.description,
-          'prettyname'   => m.pretty_name,
-          'type'         => m.type,
-          'visibility'   => m.visibility,
-          'singleton'    => m.singleton,
-          'aliases'      => m.aliases.map{ |a| a.name },
-          #'aliasfor'     => m.is_alias_for,
-          'parms'        => m.params,
-          'block_params' => m.block_params,
-          'callseq'      => m.call_seq,
-          'text'         => m.text
-          #'aref'         => m.aref,
-          #'path'         => m.path,
-        }
-      end
-      return jsync     
+  # Generate a documentation file for each class
+  def generate_classes(table)
+    debug_msg "Generating class documentation:"
+
+    classes.each do |c|
+      debug_msg "%s (%s)" % [ c.full_name, c.path ]
+      #outfile    = self.path_output + klass.path
+      #rel_prefix = self.path_output.relative_path_from(outfile.dirname)
+      #debug_msg "rendering #{path_output_relative(outfile)}"
+      #self.render_template(templatefile, outfile, :klass=>klass, :rel_prefix=>rel_prefix)
+
+      data = {}
+      data["!"]          = (c.type == 'class' ? "class" : "module")
+      data["name"]       = c.name
+      data["namespace"]  = c.full_name.split('::')[0...-1].join('::')
+      data["includes"]   = c.includes.map{ |x| x.name }
+      #data["extended"]  = []  # TODO: how?
+      data["comment"]    = c.comment
+      data["constants"]  = c.constants.map{ |x| x.name }
+      data["modules"]    = c.modules.map{ |x| x.name }
+      data["classes"]    = c.classes.map{ |x| x.name }
+      data["functions"]  = collect_methods(c, true)
+      data["methods"]    = collect_methods(c, false)
+      data["files"]      = c.in_files.map{ |x| x.full_name }
+      data["superclass"] = c.superclass.full_name if c.type == 'class'
+
+      table[c.full_name] = data
     end
+    return table
+  end
 
-    #
-    def collect_methods(class_module, singleton=false)
-      list = []
-      class_module.method_list.each do |m|
-        next if singleton ^ m.singleton
-        list << m.name unless m.singleton
-      end
-      class_module.attributes.each do |a|
-        next if singleton ^ a.singleton
-        p a.rw
-        case a.rw
-        when :write
-          list << "#{a.name}="
-        else
-          list << a.name
-        end
-      end
-      list.uniq
+  #
+  def generate_methods(table)
+    debug_msg "Generating method documentation:"
+    methods_all.each do |m|
+      debug_msg "%s" % [m.full_name]
+
+      code       = m.source_code_raw
+      file, line = m.source_code_location
+
+      full_name = method_name(m)
+
+      #'prettyname'   => m.pretty_name,
+      #'type'         => m.type, # class or instance
+
+      table[full_name] = {
+        '!'            => (m.singleton ? 'function' : 'method'),
+        'name'         => m.name,
+        'parent'       => m.parent_name,
+        'comment'      => m.comment,
+        'access'       => m.visibility.to_s,
+        'singleton'    => m.singleton,
+        'aliases'      => m.aliases.map{ |a| method_name(a) },
+        'alias_for'    => method_name(m.is_alias_for),
+        'arguments'    => m.params,
+        'block'        => m.block_params,
+        'interface'    => m.arglists,
+        'returns'      => [],
+        'file'         => file,
+        'line'         => line,
+        'source'       => code
+      }
     end
+    return table
+  end
+
+  # Generate a documentation file for each file.
+  #--
+  # TODO: Add loadpath and make file path relative to it?
+  #++
+  def generate_scripts(table)
+    debug_msg "Generating file documentation in #{path_output_relative}:"
+    #templatefile = self.path_template + 'file.rhtml'
+
+    files.each do |file|
+      debug_msg "%s" % [file.full_name]
+
+      #rel_prefix  = self.path_output.relative_path_from(outfile.dirname)
+      #context     = binding()
+      #debug_msg "rendering #{path_output_relative(outfile)}"
+
+      modules = table.select { |k, h|
+        h['!'] == 'module' && h['files'].include?(file.full_name)
+      }.map{ |k, h| k }
+
+      classes = table.select { |k, h|
+        h['!'] == 'class' && h['files'].include?(file.full_name)
+      }.map{ |k, h| k }
+
+      functions = table.select { |k, h|
+        h['!'] == 'function' && h['file'] == file.full_name
+      }.map{ |k, h| k }
+
+      methods = table.select { |k, h|
+        h['!'] == 'method' && h['file'] == file.full_name
+      }.map{ |k, h| k }
+
+      table[file.full_name] = {
+        "!"          => "script",
+        "name"       => File.basename(file.full_name),
+        "path"       => File.dirname(file.full_name),
+        "header"     => "", # TODO
+        "footer"     => "", # TODO
+        "requires"   => file.requires.map{ |r| r.name },
+        "constants"  => file.constants.map{ |c| c.full_name },
+        "modules"    => modules,   #file.modules.map{ |x| x.name },
+        "classes"    => classes,   #file.classes.map{ |x| x.name },
+        "functions"  => functions, #collect_methods(file, true),
+        "methods"    => methods    #collect_methods(file, false)
+      }
+
+      #self.render_template(templatefile, outfile, :file=>file, :rel_prefix=>rel_prefix)
+    end
+    return table
+  end
+
+  # Generate entries for whole information files, e.g. README files.
+  def generate_files(table)
+    files_toplevel.each do |file|
+      table[file.full_name] = {
+        "!"     => "file",
+        "name"  => File.basename(file.full_name),
+        "path"  => File.dirname(file.full_name),
+        "text"  => file.comment
+      }
+    end
+  end
+
+  #
+  def collect_methods(class_module, singleton=false)
+    list = []
+    class_module.method_list.each do |m|
+      next if singleton ^ m.singleton
+      list << method_name(m)
+    end
+    class_module.attributes.each do |a|
+      next if singleton ^ a.singleton
+      #p a.rw
+      case a.rw
+      when :write
+        list << "#{method_name(a)}="
+      else
+        list << method_name(a)
+      end
+    end
+    list.uniq
+  end
+
+  #
+  def method_name(method)
+    return nil if method.nil?
+    if method.singleton
+      i = method.full_name.rindex('::')     
+      method.full_name[0...i] + '.' + method.full_name[i+2..-1]
+    else
+      method.full_name
+    end
+  end
 
 
-
-#    # Create index.html
-#    def generate_index
-#      debug_msg "Generating index file in #{path_output_relative}:"
-#      templatefile = self.path_template + 'index.rhtml'
-#      outfile      = self.path_output   + 'index.html'
-#
-#      index_path   = index_file.path
-#
-#      debug_msg "rendering #{path_output_relative(outfile)}"
-#      self.render_template(templatefile, outfile, :index_path=>index_path)
-#    end
-#
-#    # TODO: Make public?
-#    def index_file
-#      if self.options.main_page && file = self.files.find { |f| f.full_name == self.options.main_page }
-#        file
-#      else
-#        self.files.first
-#      end
-#    end
 
 =begin
   # Generate an index page
@@ -699,22 +677,153 @@ module Shomen
   end
 =end
 
-    # Output progress information if rdoc debugging is enabled
+  # Output progress information if rdoc debugging is enabled
 
-    def debug_msg(msg)
-      return unless $DEBUG_RDOC
-      case msg[-1,1]
-        when '.' then tab = "= "
-        when ':' then tab = "== "
-        else          tab = "* "
-      end
-      $stderr.puts(tab + msg)
+  def debug_msg(msg)
+    return unless $DEBUG_RDOC
+    case msg[-1,1]
+      when '.' then tab = "= "
+      when ':' then tab = "== "
+      else          tab = "* "
     end
+    $stderr.puts(tab + msg)
+  end
 
+end
+
+
+require "rdoc/parser/c"
+
+# New RDoc somehow misses class comemnts.
+# copyied this function from "2.2.2" 
+if ['2.4.2', '2.4.3'].include? RDoc::VERSION
+  class RDoc::Parser::C
+    def find_class_comment(class_name, class_meth)
+      comment = nil
+      if @content =~ %r{((?>/\*.*?\*/\s+))
+                     (static\s+)?void\s+Init_#{class_name}\s*(?:_\(\s*)?\(\s*(?:void\s*)\)}xmi then
+        comment = $1
+      elsif @content =~ %r{Document-(?:class|module):\s#{class_name}\s*?(?:<\s+[:,\w]+)?\n((?>.*?\*/))}m
+        comment = $1
+      else
+        if @content =~ /rb_define_(class|module)/m then
+          class_name = class_name.split("::").last
+          comments = []
+          @content.split(/(\/\*.*?\*\/)\s*?\n/m).each_with_index do |chunk, index|
+            comments[index] = chunk
+            if chunk =~ /rb_define_(class|module).*?"(#{class_name})"/m then
+              comment = comments[index-1]
+              break
+            end
+          end
+        end
+      end
+      class_meth.comment = mangle_comment(comment) if comment
+    end
+  end
+end
+
+
+class RDoc::TopLevel
+  #
+  def to_h
+    {
+       :path     => path,
+       :name     => base_name,
+       :fullname => full_name,
+       :rootname => absolute_name,
+       :modified => last_modified,
+       :diagram  => diagram
+    }
   end
 
   #
-  ::RDoc::RDoc.add_generator(Shomen::RDocGenerator)
+  def to_json
+    to_h.to_json
+  end
+end
+
+
+class RDoc::ClassModule
+  #
+  def with_documentation?
+    document_self_or_methods || classes_and_modules.any?{ |c| c.with_documentation? }
+  end
+
+  #
+  def document_self_or_methods
+    document_self || method_list.any?{ |m| m.document_self }
+  end
+
+#  #
+#  def to_h
+#    {
+#      :name       => name,
+#      :fullname   => full_name,
+#      :type       => type,
+#      :path       => path,
+#      :superclass => module? ? nil : superclass
+#    }
+#  end
+#
+#  def to_json
+#    to_h.to_json
+#  end
+end
+
+
+class RDoc::AnyMethod
+
+#  # NOTE: dont_rename_initialize isn't used
+#  def to_h
+#    {
+#      :name         => name,
+#      :fullname     => full_name,
+#      :prettyname   => pretty_name,
+#      :path         => path,
+#      :type         => type,
+#      :visibility   => visibility,
+#      :blockparams  => block_params,
+#      :singleton    => singleton,
+#      :text         => text,
+#      :aliases      => aliases,
+#      :aliasfor     => is_alias_for,
+#      :aref         => aref,
+#      :parms        => params,
+#      :callseq      => call_seq
+#      #:paramseq     => param_seq,
+#    }
+#  end
+
+#  #
+#  def to_json
+#    to_h.to_json
+#  end
+
+  #
+  def source_code_raw
+    return '' unless @token_stream
+    src = ""
+    @token_stream.each do |t|
+      next unless t
+      src << t.text
+    end
+    #add_line_numbers(src)
+    src
+  end
+
+  #
+  def source_code_location
+    src = source_code_raw
+    if md = /File (.*?), line (\d+)/.match(src)
+      file = md[1]
+      line = md[2]
+    else
+      file = "(unknown)"
+      line = 0
+    end
+    return file, line
+  end
 
 end
 

@@ -1,7 +1,7 @@
 #require 'shomen/components/abstract'
 require 'ostruct'
 
-module Shomen
+module RDocShomen
 
   # Metadata mixin, needs #path_base.
   #
