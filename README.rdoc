@@ -70,6 +70,7 @@ The +script+ type provides information about a ruby program _file_.
       "path": "musicstore",
       "header": "song.rb (c) 2010 John Doe",
       "footer": "",
+      "requires": [],
       "constants": [],
       "modules": ["MusicStore"],
       "classes": [],
@@ -127,7 +128,7 @@ The +constant+ type describes a constant.
       "comment": "Where to store music store's configuration."
   }
 
-=== Instance Method Type
+=== Method Type
 
 The +method+ type describes an instance method.
 
@@ -137,13 +138,16 @@ The +method+ type describes an instance method.
       "namespace": "MusicStore::Song",
       "comment": "Play the song.",
       "access": public
+      "interface": [
+        'play(seconds=nil)'
+      ],
       "arguments": [
         {
           "name": "seconds",
           "comment": "number of seconds to playback"
         }
       ]
-      "return": [
+      "returns": [
          {
            "type": "Integer",
            "comment": "forked process id"
@@ -151,9 +155,12 @@ The +method+ type describes an instance method.
       ]
   }
 
-=== Functional Method Type
+=== Function Type
 
-The +function+ type describes a class/module singleton method.
+The +function+ type describes a class/module singleton method. The use of
+the term "function" might seem an odd one, but it actually a term Matz has
+used as a way to better conceptualize the character of class singleton
+methods.
 
   "MusicStore::Song.config_directory": {
       "!": "function",
@@ -162,10 +169,10 @@ The +function+ type describes a class/module singleton method.
       "comment": "Overridable setting for configuration directory.",
       "access": public
       "arguments": []
-      "return": [
+      "returns": [
          {
            "type": "String",
-           "comment": "confifuration directory"
+           "comment": "configuration directory"
          }
       ]
   }
@@ -189,42 +196,125 @@ before the actual code for the entry.
 
 === constants
 
+Used by scripts, modules and classes, provides a list of constants
+found within it's context (excluding modules and classes, though they
+are technically constant references too).
 
 === modules
 
+Used by scripts, modules and classes, provides a list of modules
+found within it's context.
 
 === classes
 
+Used by scripts, modules and classes, provides a list of classes
+found within it's context.
 
 === methods
 
+Used by scripts, modules and classes, provides a list of instance methods
+found within it's context.
 
 === functions
 
+Used by scripts, modules and classes, provides a list of class-singleton
+methods found within it's context.
 
 === access
 
-The +method+ and +function+ types have +access+ which can either be
+The +method+ and +function+ types have +access+ types which can either be
 +public+, +protected+ or +private+.
+
+=== literal_interface
+
+The +literal_interface+ provides a literal image of a method's or function's
+argument interace, e.g.
+
+  'x(*args)'
+
+=== interface
+
+The +interface+ field provides a list of intendend interface for a
+method or function, as a subset of the literal interface.
+
+For example:
+
+  def x(*args)
+    opts = Hash === args.last ? args.pop : {}
+    name = args.first
+    ...
+  end
+
+Might document the interface as:
+
+  'interface': [
+    'x(name, opts={})'
+  ]
+
 
 === arguments
 
-The +arguments+ field is used by the +method+ and +function+ types. It is 
-a sequence describing the methods interface.
+The +arguments+ field is used by the +method+ and +function+ types to provide
+details about interface arguments.
 
-=== return
+  'arguments': [
+    { 
+      'name': 'name',
+      'comment': 'name of x'
+    },
+    {
+      'name': 'opts',
+      'comment': 'runtime options for x'
+    }
+  ]
 
-The +return+ field by the +method+ and +function+ types. It is a sequence of
-possible return values. Ususally there is only one entry in the array,
-but it is possble for there to be multiple ruturn values based on conditions
-within the methods. For example, am method might return a filename if the file
-exists, but +nil+ otherwise.
+=== parameters
+
+The +parametes+ field is used by the +method+ and +function+ types to provide
+details about an interface's named paraemters. For example in the above +x+
+method, +opts+ is used for named parameters. If there are specifically recognized
+options, the +parameters+ field can be used to descrip them.
+
+  'parameters': [
+    { 
+      'name': 'foo',
+      'comment': 'foo description',
+      'for': 'opts'
+    }
+  ]
+
+Notice that arguments and parameters do not have a direct linkage to the 
+interface they describe. While techincally, we could make +arguments+ and 
++parameters+ a subfield of the +interface+ as a mapping, available documentation
+tools do not typically provide means for describing that level of detail.
+The use of unique argument names is generally sufficient to communicate the
+relationship. The +parameters+ field provides the +for+ subfield as an option
+to make that relationship clearer.
+
+=== returns
+
+The +returns+ field, used by the +method+ and +function+ type, is a sequence of
+possible return values. Ususally there is only one return value, but it is 
+possible for there to be multiple ruturn values based on conditions
+within the method. For example, a method might return a filename if a file
+exists, but +nil+ otherwise, in which case the +returns+ field might look like:
+
+  'returns': [
+    {
+      'type': 'String'
+      'comment': 'filename'
+    },
+    {
+      'type': 'nil',
+      'comment': 'if no file is found'
+    }
+  }
 
 
-== Guidelines for Parsers
+== Guidelines for Documentation Parsers
 
 
-== Guidelines for Generators
+== Guidelines for Documentation Generators
 
 
 
