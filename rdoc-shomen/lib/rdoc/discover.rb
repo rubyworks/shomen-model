@@ -1,5 +1,4 @@
-#require File.join(File.dirname(__FILE__), '/../rdazzle')
-
+#
 puts "RDoc discovered Shomen!"
 
 # If using Gems put her on the $LOAD_PATH
@@ -9,6 +8,9 @@ begin
   gem 'rdoc-shomen'
 end
 
+require 'rdoc/option_fix'
+
+=begin
 unless defined?($FIXED_RDOC_OPTIONS)
   $FIXED_RDOC_OPTIONS = true
 
@@ -46,13 +48,11 @@ unless defined?($FIXED_RDOC_OPTIONS)
       #end
     end
   end
-
 end
+=end
 
 RDoc.generator_option('shomen') do
   require 'rdoc/generator/shomen'
   RDoc::Generator::Shomen
 end
-
-
 

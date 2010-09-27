@@ -24,9 +24,7 @@ require 'rdoc/rdoc'
 require 'rdoc/generator'
 require 'rdoc/generator/markup'
 
-#require 'shomen/core_ext/times'
-
-require 'rdoc-shomen/metadata'
+#require 'rdoc-shomen/metadata'
 
 # TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
 def fileutils
@@ -41,7 +39,7 @@ class RDoc::Generator::Shomen
   # Base of file name used to save output.
   FILENAME = "shomen"
 
-  include RDocShomen::Metadata
+  #include RDocShomen::Metadata
 
   #PATH = Pathname.new(File.dirname(__FILE__))
 
