@@ -1,0 +1,5 @@
+= DEVELOPER NOTES
+
+== RDoc Dependency
+
+Though this could probably work with RDoc 2.4.2+, I have set the dependency to 2.5~.

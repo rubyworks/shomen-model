@@ -2,13 +2,9 @@
 lib/rdoc/c_parser_fix.rb
 lib/rdoc/discover.rb
 lib/rdoc/generator/shomen.rb
-lib/rdoc-shomen/core_ext/fileutils.rb
-lib/rdoc-shomen/core_ext/rdoc.rb
-lib/rdoc-shomen/core_ext/times.rb
-lib/rdoc-shomen/metadata.rb
-lib/rdoc-shomen/timedelta.rb
-lib/rdoc-shomen.rb
 meta/package
 meta/profile
+Rakefile
 README
+NOTES.rdoc
 Syckfile
