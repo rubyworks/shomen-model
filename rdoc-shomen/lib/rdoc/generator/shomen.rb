@@ -7,8 +7,6 @@
 #rescue
 #end
 
-require "rdoc/rdoc"
-
 #if Gem.available? "json"
 #  gem "json", ">= 1.1.3"
 #else
@@ -29,7 +27,6 @@ require 'rdoc/generator/markup'
 #require 'shomen/core_ext/times'
 
 require 'rdoc-shomen/metadata'
-#require 'shomen/rdoc/template'
 
 # TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
 def fileutils
@@ -41,24 +38,12 @@ class RDoc::Generator::Shomen
 
   RDoc::RDoc.add_generator self
 
-  #PATH = Pathname.new(File.join(LOADPATH, 'rdazzle', 'generators'))
+  # Base of file name used to save output.
+  FILENAME = "shomen"
 
-  #include ERB::Util
   include RDocShomen::Metadata
 
-  #
-  # C O N S T A N T S
-  #
-
   #PATH = Pathname.new(File.dirname(__FILE__))
-
-  # Directory where generated classes live relative to the root
-  # TODO: Fix in future version when RDoc fixes.
-  CLASS_DIR = nil #'classes'
-
-  # Directory where generated files live relative to the root
-  # TODO: Fix in future version when RDoc fixes.
-  FILE_DIR = nil #'files'
 
   # Standard generator factory method.
   def self.for(options)
@@ -67,23 +52,6 @@ class RDoc::Generator::Shomen
 
   # User options from the command line.
   attr :options
-
-  # Get title from options or metadata.
-  #def title
-  #  @title ||= (
-  #    if options.title == "API Reference"
-  #      metadata.title || "API Reference"
-  #    else
-  #      options.title
-  #    end
-  #  )
-  #end
-
-  # FIXME: Pull copyright from project.
-  #def copyright
-  #  #metadata.copyright || "&copy; #{Time.now.strftime('Y')}"
-  #  "(c) 2009".sub("(c)", "&copy;")
-  #end
 
   # List of all classes and modules.
   #def all_classes_and_modules
@@ -104,65 +72,55 @@ class RDoc::Generator::Shomen
     @classes_toplevel ||= classes.select {|klass| !(RDoc::ClassModule === klass.parent) }
   end
 
-  # Documented classes and modules sorted by salience first, then by name.
-
-  def classes_salient
-    @classes_salient ||= sort_salient(classes)
-  end
-
-  #
-
-  def classes_hash
-    @classes_hash ||= RDoc::TopLevel.modules_hash.merge(RDoc::TopLevel.classes_hash)
-  end
+  ## Documented classes and modules sorted by salience first, then by name.
+  #def classes_salient
+  #  @classes_salient ||= sort_salient(classes)
+  #end
 
   #
-
-  def modules
-    @modules ||= RDoc::TopLevel.modules.sort
-  end
-
-  #
-
-  def modules_toplevel
-    @modules_toplevel ||= modules.select {|klass| !(RDoc::ClassModule === klass.parent) }
-  end
+  #def classes_hash
+  #  @classes_hash ||= RDoc::TopLevel.modules_hash.merge(RDoc::TopLevel.classes_hash)
+  #end
 
   #
-
-  def modules_salient
-    @modules_salient ||= sort_salient(modules)
-  end
-
-  #
-
-  def modules_hash
-    @modules_hash ||= RDoc::TopLevel.modules_hash
-  end
+  #def modules
+  #  @modules ||= RDoc::TopLevel.modules.sort
+  #end
 
   #
-
-  def types
-    @types ||= RDoc::TopLevel.classes.sort
-  end
-
-  #
-
-  def types_toplevel
-    @types_toplevel ||= types.select {|klass| !(RDoc::ClassModule === klass.parent) }
-  end
+  #def modules_toplevel
+  #  @modules_toplevel ||= modules.select {|klass| !(RDoc::ClassModule === klass.parent) }
+  #end
 
   #
-
-  def types_salient
-    @types_salient ||= sort_salient(types)
-  end
+  #def modules_salient
+  #  @modules_salient ||= sort_salient(modules)
+  #end
 
   #
+  #def modules_hash
+  #  @modules_hash ||= RDoc::TopLevel.modules_hash
+  #end
 
-  def types_hash
-    @types_hash ||= RDoc::TopLevel.classes_hash
-  end
+  #
+  #def types
+  #  @types ||= RDoc::TopLevel.classes.sort
+  #end
+
+  #
+  #def types_toplevel
+  #  @types_toplevel ||= types.select {|klass| !(RDoc::ClassModule === klass.parent) }
+  #end
+
+  #
+  #def types_salient
+  #  @types_salient ||= sort_salient(types)
+  #end
+
+  #
+  #def types_hash
+  #  @types_hash ||= RDoc::TopLevel.classes_hash
+  #end
 
   #
 
@@ -189,71 +147,47 @@ class RDoc::Generator::Shomen
     @methods_all ||= classes.map{ |m| m.method_list }.flatten.sort
   end
 
-  #
-  #def find_class_named(*a,&b)
-  #  RDoc::TopLevel.find_class_named(*a,&b) || RDoc::TopLevel.find_module_named(*a,&b)
-  #end
-
-  ##
-  #def find_module_named(*a,&b)
-  #  RDoc::TopLevel.find_module_named(*a,&b)
-  #end
-
-  ##
-  #def find_type_named(*a,&b)
-  #  RDoc::TopLevel.find_class_named(*a,&b)
-  #end
-
-  #
-  #def find_file_named(*a,&b)
-  #  RDoc::TopLevel.find_file_named(*a,&b)
-  #end
-
   ## TODO: What's this then?
-  #def json_creatable?
-  #  RDoc::TopLevel.json_creatable?
-  #end
+  ##def json_creatable?
+  ##  RDoc::TopLevel.json_creatable?
+  ##end
 
   # RDoc needs this to function.
-
-  def class_dir ; CLASS_DIR ; end
+  def class_dir ; nil ; end
 
   # RDoc needs this to function.
-
-  def file_dir  ; FILE_DIR ; end
+  def file_dir  ; nil ; end
 
   # Build the initial indices and output objects
   # based on an array of top level objects containing
   # the extracted information.
-
   def generate(files)
     @files_rdoc = files.sort
 
     @table = {}
 
+    generate_metadata(@table)
     generate_constants(@table)
     generate_classes(@table)
     generate_methods(@table)
     generate_scripts(@table)   # have to do this last b/c it depends on the others
-    #generate_files(@table)
+    generate_files(@table)
 
 #pp table #.select{ |k, h| h['!'] == 'script' }
 
     #file = File.join(@path_output, 'rdoc.jsync')
 
     yaml = @table.to_yaml
-    File.open('rdoc.yaml', 'w'){ |f| f << yaml }
+    File.open(FILENAME + '.yaml', 'w'){ |f| f << yaml }
 
     json = JSON.generate(@table)
-    File.open('rdoc.json', 'w') do |f|
-      f << json
-    end
+    File.open(FILENAME + '.json', 'w'){ |f| f << json }
 
     ref_table = reference_table(@table)
 
-    yaml  = ref_table.to_yaml
-    File.open('rdoc2.yaml', 'w'){ |f| f << yaml }
-    
+    yaml = ref_table.to_yaml
+    File.open(FILENAME + '-ref.yaml', 'w'){ |f| f << yaml }
+
     # TODO: JSYNC
 
   #rescue StandardError => err
@@ -261,7 +195,8 @@ class RDoc::Generator::Shomen
   #  raise err
   end
 
-  #
+  # Loop through table and convert all named references into bonofied object
+  # references.
   def reference_table(table)
     debug_msg "== Generating Reference Table"
     new_table = {}
@@ -298,37 +233,62 @@ class RDoc::Generator::Shomen
     new_table
   end
 
-  #
+  # Given a key, return the matching table item. If not found return the key.
   def ref_item(key)
     @table[key] || key
   end
 
-  #
+  # Given a list of keys, return the matching table items.
   def ref_list(keys)
-    keys.map{ |k| @table[k] || k }
+    #keys.map{ |k| @table[k] || k }
+    keys.map{ |k| @table[k] || nil }.compact
   end
+
+  #
+  #def metadata
+  #  @metadata ||= get_metadata
+  #end
+
+  # TODO: Need a better way to determine if POM::Metadata exists.
+  #def get_metadata
+  #  data = OpenStruct.new
+  #  begin
+  #    require 'gemdo/metadata'
+  #    pom = GemDo::Metadata.new(path_base)
+  #    raise LoadError unless pom.name
+  #    data.title       = pom.title
+  #    data.version     = pom.version
+  #    data.subtitle    = nil #pom.subtitle
+  #    data.homepage    = pom.homepage
+  #    data.resources   = pom.resources
+  #    data.mailinglist = pom.resources.mailinglist
+  #    data.development = pom.resources.development
+  #    data.forum       = pom.forum
+  #    data.wiki        = pom.wiki
+  #    data.blog        = pom.blog
+  #    data.copyright   = pom.copyright
+  #  rescue LoadError
+  #    if file = Dir[path_base + '*.gemspec'].first
+  #      gem = YAML.load(file)
+  #      data.title       = gem.title
+  #      data.version     = gem.version
+  #      data.subtitle    = nil
+  #      date.homepage    = gem.homepage
+  #      data.mailinglist = gem.email
+  #      data.development = nil
+  #      data.forum       = nil
+  #      data.wiki        = nil
+  #      data.blog        = nil
+  #      data.copyright   = nil
+  #    else
+  #      puts "No Metadata!"
+  #      # TODO: we may be able to develop some other hueristics here, but for now, nope.
+  #    end
+  #  end
+  #  return data
+  #end
 
 protected
-
-  #
-
-  def sort_salient(classes)
-    nscounts = classes.inject({}) do |counthash, klass|
-      top_level = klass.full_name.gsub( /::.*/, '' )
-      counthash[top_level] ||= 0
-      counthash[top_level] += 1
-      counthash
-    end
-    # Sort based on how often the top level namespace occurs, and then on the
-    # name of the module -- this works for projects that put their stuff into
-    # a namespace, of course, but doesn't hurt if they don't.
-    classes.sort_by do |klass|
-      top_level = klass.full_name.gsub( /::.*/, '' )
-      [nscounts[top_level] * -1, klass.full_name]
-    end.select do |klass|
-      klass.document_self
-    end
-  end
 
   #
   def initialize(options)
@@ -341,27 +301,15 @@ protected
   end
 
   #
-  def reference?
-    @reference
-  end
+  #def reference?
+  #  @reference
+  #end
 
   # Current pathname.
   attr :path_base
 
   # The output path.
   attr :path_output
-
-  # Path to static files. This is <tt>path + 'static'</tt>.
-  #def path_static
-  #  Pathname.new(LOADPATH + "/rdazzle/generators/#{template}/static")
-  #  #path + '#{template}/static'
-  #end
-
-  # Path to static files. This is <tt>path + 'template'</tt>.
-  #def path_template
-  #  Pathname.new(LOADPATH + "/rdazzle/generators/#{template}/template")
-  #  #path + '#{template}/template'
-  #end
 
   #
   def path_output_relative(path=nil)
@@ -370,6 +318,54 @@ protected
     else
       @path_output_relative ||= path_output.to_s.sub(path_base.to_s+'/', '')
     end
+  end
+
+  #
+  def generate_metadata(table)
+    begin
+      require 'gemdo/project'
+      generate_metadata_from_gemdo(table)
+    rescue Exception
+      begin
+        if spec = Dir['*.gemspec'].first
+          require 'rubygems/specification'
+          generate_metadata_from_gemspec(table)
+        end
+      rescue Exception
+        debug_msg "Could not find any meatadata."
+      end
+    end
+  end
+
+  #
+  def generate_metadata_from_gemdo(table)
+    project = GemDo::Project.new
+    table['(metadata)'] = {
+      "!"           => "metadata",
+      "name"        => project.name,
+      "version"     => project.version,
+      "title"       => project.title,
+      "summary"     => project.metadata.summary,
+      "description" => project.metadata.description,
+      "contact"     => project.metadata.contact,
+      "homepage"    => project.metadata.resources.home
+    }
+  end
+
+  #
+  def generate_metadata_from_gemspec(table)
+    file = Dir['*.gemspec'].first
+    spec = RubyGems::Specification.new(file)  #?
+    table['(metadata)'] = {
+      "!"           => "metadata",
+      "name"        => spec.name,
+      "title"       => spec.name.upcase,
+      "version"     => spec.version.to_s,
+      "summary"     => spec.summary,
+      "description" => spec.description,
+      "contact"     => spec.email,
+      "homepage"    => spec.homepage
+    }
   end
 
   #
@@ -445,8 +441,10 @@ protected
         'singleton'    => m.singleton,
         'aliases'      => m.aliases.map{ |a| method_name(a) },
         'alias_for'    => method_name(m.is_alias_for),
-        'arguments'    => m.params,
-        'block'        => m.block_params,
+        'image'        => m.params,
+        'arguments'    => [],
+        'parameters'   => [],
+        'block'        => m.block_params, # TODO: what is block?
         'interface'    => m.arglists,
         'returns'      => [],
         'file'         => file,
@@ -467,6 +465,8 @@ protected
 
     files.each do |file|
       debug_msg "%s" % [file.full_name]
+
+      abspath = File.join(path_base, file.full_name)
 
       #rel_prefix  = self.path_output.relative_path_from(outfile.dirname)
       #context     = binding()
@@ -492,6 +492,7 @@ protected
         "!"          => "script",
         "name"       => File.basename(file.full_name),
         "path"       => File.dirname(file.full_name),
+        "mtime"      => File.mtime(abspath),
         "header"     => "", # TODO
         "footer"     => "", # TODO
         "requires"   => file.requires.map{ |r| r.name },
@@ -510,11 +511,13 @@ protected
   # Generate entries for whole information files, e.g. README files.
   def generate_files(table)
     files_toplevel.each do |file|
+      abspath = File.join(path_base, file.full_name)
       table[file.full_name] = {
         "!"     => "file",
         "name"  => File.basename(file.full_name),
         "path"  => File.dirname(file.full_name),
-        "text"  => file.comment
+        "mtime" => File.mtime(abspath),
+        "text"  => File.read(abspath) #file.comment
       }
     end
   end
@@ -550,9 +553,42 @@ protected
     end
   end
 
+  # Output progress information if rdoc debugging is enabled
 
+  def debug_msg(msg)
+    return unless $DEBUG_RDOC
+    case msg[-1,1]
+      when '.' then tab = "= "
+      when ':' then tab = "== "
+      else          tab = "* "
+    end
+    $stderr.puts(tab + msg)
+  end
 
 =begin
+  #
+  # N O T  U S E D
+  #
+
+  # Sort based on how often the top level namespace occurs, and then on the
+  # name of the module -- this works for projects that put their stuff into
+  # a namespace, of course, but doesn't hurt if they don't.
+  def sort_salient(classes)
+    nscounts = classes.inject({}) do |counthash, klass|
+      top_level = klass.full_name.gsub( /::.*/, '' )
+      counthash[top_level] ||= 0
+      counthash[top_level] += 1
+      counthash
+    endfiles_toplevel
+    classes.sort_by{ |klass|
+      top_level = klass.full_name.gsub( /::.*/, '' )
+      [nscounts[top_level] * -1, klass.full_name]
+    }.select{ |klass|
+      klass.document_self
+    }
+  end
+
+
   # Generate an index page
   def generate_index_file
     debug_msg "Generating index file in #@path_output"
@@ -676,18 +712,6 @@ protected
     end
   end
 =end
-
-  # Output progress information if rdoc debugging is enabled
-
-  def debug_msg(msg)
-    return unless $DEBUG_RDOC
-    case msg[-1,1]
-      when '.' then tab = "= "
-      when ':' then tab = "== "
-      else          tab = "* "
-    end
-    $stderr.puts(tab + msg)
-  end
 
 end
 

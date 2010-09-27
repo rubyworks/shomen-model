@@ -14,7 +14,7 @@
 
 #  require "rdoc/c_parser_fix"
 
-  require "rdoc/generator/shomen"
+#  require "rdoc/generator/shomen"
 
 =begin
   unless defined?($SHOMEN_FIXED_RDOC_OPTIONS)
