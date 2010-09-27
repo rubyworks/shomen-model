@@ -2,9 +2,11 @@
 lib/rdoc/c_parser_fix.rb
 lib/rdoc/discover.rb
 lib/rdoc/generator/shomen.rb
+lib/rdoc/option_fix.rb
 meta/package
 meta/profile
 Rakefile
-README
+HISTORY.rdoc
+README.rdoc
 NOTES.rdoc
 Syckfile
