@@ -171,7 +171,7 @@ class RDoc::Generator::Shomen
     generate_scripts(@table)   # have to do this last b/c it depends on the others
     generate_files(@table)
 
-#pp table #.select{ |k, h| h['!'] == 'script' }
+    #pp table if $DEBUG
 
     #file = File.join(@path_output, 'rdoc.jsync')
 
@@ -181,12 +181,11 @@ class RDoc::Generator::Shomen
     json = JSON.generate(@table)
     File.open(FILENAME + '.json', 'w'){ |f| f << json }
 
-    ref_table = reference_table(@table)
+    # TODO: Internal referencing model, YAML and JSYNC ?
 
-    yaml = ref_table.to_yaml
-    File.open(FILENAME + '-ref.yaml', 'w'){ |f| f << yaml }
-
-    # TODO: JSYNC
+    #ref_table = reference_table(@table)
+    #yaml = ref_table.to_yaml
+    #File.open(FILENAME + '-ref.yaml', 'w'){ |f| f << yaml }
 
   #rescue StandardError => err
   #  debug_msg "%s: %s\n  %s" % [ err.class.name, err.message, err.backtrace.join("\n  ") ]
@@ -292,16 +291,10 @@ protected
   def initialize(options)
     @options = options
     #@options.diagram = false  # why?
-    #@reference = options.reference
 
     @path_base   = Pathname.pwd.expand_path
     @path_output = Pathname.new(@options.op_dir).expand_path(@path_base)
   end
-
-  #
-  #def reference?
-  #  @reference
-  #end
 
   # Current pathname.
   attr :path_base
