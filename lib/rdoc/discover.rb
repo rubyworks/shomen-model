@@ -1,0 +1,1 @@
+require 'shomen/rdoc/discover'
