@@ -1,8 +1,0 @@
-name   : rdoc-shomen
-date   : 2010-09-20
-version: 0.1.0
-
-requires:
-  - rdoc 2.5~
-  - syckle (build)
-

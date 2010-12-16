@@ -10,6 +10,10 @@ description:
   programs which is used by other systems as a common source
   for rendering.
 
+requires:
+  - rdoc 2.5~
+  - syckle (build)
+
 resources:
   home: http://proutils.github.com/shomen
   work: http://github.com/proutils/shomen
