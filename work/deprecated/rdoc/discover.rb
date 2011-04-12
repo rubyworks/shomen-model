@@ -5,7 +5,7 @@ puts "RDoc discovered Shomen!"
 begin
   require "rubygems"
   gem "rdoc", "~> 2.5"
-  gem 'rdoc-shomen'
+  gem "shomen"
 end
 
 require 'rdoc/option_fix'
@@ -52,7 +52,7 @@ end
 =end
 
 RDoc.generator_option('shomen') do
-  require 'rdoc/generator/shomen'
+  require 'shoment/rdoc/generator'
   RDoc::Generator::Shomen
 end
 

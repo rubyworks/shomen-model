@@ -1,6 +1,5 @@
 --- 
-title: RDoc Shomen Apdater
-suite: rubyworks
+title: Shomen
 summary: Standardized Ruby Documentation Format
 authors: Thomas Sawyer <transfire@gmail.com>
 created: 2010-07-01
@@ -11,7 +10,7 @@ description:
   for rendering.
 
 requires:
-  - rdoc 2.5~
+  - rdoc 3~
   - syckle (build)
 
 resources:

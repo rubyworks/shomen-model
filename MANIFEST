@@ -1,12 +1,18 @@
 #!mast -x Syckle bin lib meta qed [A-Z]*
-lib/rdoc/c_parser_fix.rb
 lib/rdoc/discover.rb
-lib/rdoc/generator/shomen.rb
-lib/rdoc/option_fix.rb
-meta/package
-meta/profile
+lib/shomen/hyper/index.html
+lib/shomen/hyper/jquery.jqote2.min.js
+lib/shomen/hyper/jquery.js
+lib/shomen/hyper/rdoc.json
+lib/shomen/rdoc/c_parser_fix.rb
+lib/shomen/rdoc/discover.rb
+lib/shomen/rdoc/generator.rb
+lib/shomen/rdoc/option_fix.rb
+lib/shomen.yml
 Rakefile
 HISTORY.rdoc
+Profile
 README.rdoc
 NOTES.rdoc
 Syckfile
+Version

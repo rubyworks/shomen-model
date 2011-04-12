@@ -34,6 +34,7 @@ end
 #
 class RDoc::Generator::Shomen
 
+  # Register shomen generator with RDoc.
   RDoc::RDoc.add_generator self
 
   # Base of file name used to save output.
@@ -402,7 +403,7 @@ protected
       data["functions"]  = collect_methods(c, true)
       data["methods"]    = collect_methods(c, false)
       data["files"]      = c.in_files.map{ |x| x.full_name }
-      data["superclass"] = c.superclass.full_name if c.type == 'class'
+      data["superclass"] = c.superclass if c.type == 'class'
 
       table[c.full_name] = data
     end
