@@ -39,3 +39,31 @@ unless defined?($FIXED_RDOC_OPTIONS)
 
 end
 
+=begin
+  #
+  class RDoc::Options
+    #alias_method :rdoc_initialize, :initialize
+    #def initialize
+    #  rdoc_initialize
+    #  @generator = RDoc::Generator::RDazzle
+    #end
+
+    alias_method :rdoc_parse, :parse
+
+    def parse(argv)
+      rdoc_parse(argv)
+      #begin
+      if blk = RDoc.generator_option(@template)
+        @generator = blk.call
+      end
+      #if @template == 'shomen'
+      #  require "rdoc-shomen/generator"
+      #  @generator = RDocShomen::Generator
+      #end
+      #rescue LoadError
+      #end
+    end
+  end
+end
+=end
+
