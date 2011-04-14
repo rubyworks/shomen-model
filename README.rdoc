@@ -2,16 +2,16 @@
 
 == Description
 
-Shomen defines a standarard documentation model for Ruby scripts. The 
+Shomen is an intermediary documentation model catered to Ruby. The 
 specification is a flat mapping, without internal referencing, suitable for
 storage in both YAML and JSON formats.
 
 == Why?
 
-By using this standard, documentation parsers need only concern themselves with
-a single output target. And documentation templates in turn only need to concern
-themselves with a single input format to use regardless of the parsing system
-that was used to generate it.
+By using a standard intermediary format, documentation parsers need only concern
+themselves with a single output target. And documentation templates in turn only
+need to concern themselves with a single input format to use regardless of the
+parsing system that was used to generate it.
 
 == Design By Example
 
@@ -122,7 +122,7 @@ The +module+ type describes a Ruby Module.
       "includes"    : [],
       "extended"    : [],
       "comment"     : "Common methods for MusicStore classes.",
-      "constants"   : ["CONFIG_DIRECTORY"],
+      "constants"   : ["MusicStore::CONFIG_DIRECTORY"],
       "modules"     : ["MusicStore::MusicMixin"],
       "classes"     : ["MusicStore::Song"],
       "functions"   : [],

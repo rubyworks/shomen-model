@@ -4,10 +4,7 @@ lib/shomen/hyper/index.html
 lib/shomen/hyper/jquery.jqote2.min.js
 lib/shomen/hyper/jquery.js
 lib/shomen/hyper/rdoc.json
-lib/shomen/rdoc/c_parser_fix.rb
-lib/shomen/rdoc/discover.rb
 lib/shomen/rdoc/generator.rb
-lib/shomen/rdoc/option_fix.rb
 lib/shomen.yml
 Rakefile
 HISTORY.rdoc
