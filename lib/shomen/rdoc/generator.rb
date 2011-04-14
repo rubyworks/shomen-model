@@ -24,14 +24,19 @@ require 'rdoc/rdoc'
 require 'rdoc/generator'
 require 'rdoc/generator/markup'
 
-#require 'rdoc-shomen/metadata'
+#require 'shomen/metadata'
 
 # TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
 def fileutils
   $dryrun ? FileUtils::DryRun : FileUtils
 end
 
+# Shomen Adaptor for RDoc
 #
+# Of course RDoc is almost entirely a free-form documentation system,
+# so it is not possible for Shomen to fully harness all the details it
+# can support from the RDoc documentation.
+
 class RDoc::Generator::Shomen
 
   # Register shomen generator with RDoc.
@@ -315,9 +320,10 @@ protected
   #
   def generate_metadata(table)
     begin
-      require 'gemdo/project'
-      generate_metadata_from_gemdo(table)
-    rescue Exception
+      #require 'pom/project'
+      generate_metadata_from_spec(table)
+    rescue Exception => error
+      puts error
       begin
         if spec = Dir['*.gemspec'].first
           require 'rubygems/specification'
@@ -330,23 +336,46 @@ protected
   end
 
   #
-  def generate_metadata_from_gemdo(table)
-    project = GemDo::Project.new
+  SPEC_GLOB = '{.ruby,.rubyspec}'
+
+  #
+  def generate_metadata_from_spec(table)
+    file = Dir[path_base + SPEC_GLOB].first
+    data = YAML.load(File.new(file))
     table['(metadata)'] = {
       "!"           => "metadata",
-      "name"        => project.name,
-      "version"     => project.version,
-      "title"       => project.title,
-      "summary"     => project.metadata.summary,
-      "description" => project.metadata.description,
-      "contact"     => project.metadata.contact,
-      "homepage"    => project.metadata.resources.home
+      "name"        => data['name'],
+      "version"     => data['version'],
+      "title"       => data['title'],
+      "summary"     => data['summary'],
+      "description" => data['description'],
+      "contact"     => data['contact'],
+      "resources"   => data['resources'],
+      "markup"      => 'rdoc'
     }
   end
 
   #
+  #def generate_metadata_from_pom(table)
+  #  project = POM::Project.new
+  #  table['(metadata)'] = {
+  #    "!"           => "metadata",
+  #    "name"        => project.name,
+  #    "version"     => project.version,
+  #    "title"       => project.title,
+  #    "summary"     => project.metadata.summary,
+  #    "description" => project.metadata.description,
+  #    "contact"     => project.metadata.contact,
+  #    "homepage"    => project.metadata.resources.home
+  #  }
+  #end
+
+  #
+  GEMSPEC_GLOB = '{.gemspec,*.gemspec}'
+
+  #
   def generate_metadata_from_gemspec(table)
-    file = Dir['*.gemspec'].first
+    file = Dir[path_base + GEMSPEC_GLOB].first
     spec = RubyGems::Specification.new(file)  #?
     table['(metadata)'] = {
       "!"           => "metadata",
@@ -356,7 +385,8 @@ protected
       "summary"     => spec.summary,
       "description" => spec.description,
       "contact"     => spec.email,
-      "homepage"    => spec.homepage
+      "resources"   => { "homepage" => spec.homepage },
+      "markup"      => 'rdoc'
     }
   end
 
@@ -397,9 +427,9 @@ protected
       data["includes"]   = c.includes.map{ |x| x.name }
       #data["extended"]  = []  # TODO: how?
       data["comment"]    = c.comment
-      data["constants"]  = c.constants.map{ |x| x.name }
-      data["modules"]    = c.modules.map{ |x| x.name }
-      data["classes"]    = c.classes.map{ |x| x.name }
+      data["constants"]  = c.constants.map{ |x| complete_name(x.name, c.full_name) }
+      data["modules"]    = c.modules.map{ |x| complete_name(x.name, c.full_name) }
+      data["classes"]    = c.classes.map{ |x| complete_name(x.name, c.full_name) }
       data["functions"]  = collect_methods(c, true)
       data["methods"]    = collect_methods(c, false)
       data["files"]      = c.in_files.map{ |x| x.full_name }
@@ -408,6 +438,15 @@ protected
       table[c.full_name] = data
     end
     return table
+  end
+
+  # Returns String of fully qualified name.
+  def complete_name(name, namespace)
+    if name !~ /^#{namespace}/
+      "#{namespace}::#{name}"
+    else
+      name
+    end
   end
 
   #
