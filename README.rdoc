@@ -217,7 +217,7 @@ methods.
 
 == Fields
 
-== name
+=== name
 
 Every entry type has a name field. This simply give the local name of
 the entry.
