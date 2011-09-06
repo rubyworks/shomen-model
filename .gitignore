@@ -1,4 +1,6 @@
+.yardoc
 doc
 log
 pkg
+site/doc.json
 tmp
