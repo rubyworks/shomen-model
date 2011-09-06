@@ -26,7 +26,7 @@ require 'rdoc/generator/markup'
 
 #require 'shomen/metadata'
 
-# TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
+## TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
 def fileutils
   $dryrun ? FileUtils::DryRun : FileUtils
 end
