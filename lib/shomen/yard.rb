@@ -26,7 +26,7 @@ module Shomen
       if @clear or not File.exist?(@db)
         `yard -n -b #{@db}`  # TODO: don't shell out
       end
-      @registry = YARD::Registry.load!('.yardoc')
+      @registry = YARD::Registry.load!(@db)
     end
 
     # Determine files by looking up .yardopts (kind of a hack).
@@ -206,11 +206,6 @@ module Shomen
     #
     def generate_constant(object)
       debug_msg index = "#{object.path}"   # "#{base.full_name}::#{c.name}"
-
-puts index
-puts "----------------------------------------------------------------"
-puts
-puts
 
       table[index] = {
         "!"         => "constant",

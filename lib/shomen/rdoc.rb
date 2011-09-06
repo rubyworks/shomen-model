@@ -26,6 +26,7 @@ require 'rdoc/generator/markup'
 
 #require 'shomen/metadata'
 
+## TODO: Is this needed?
 ## TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
 def fileutils
   $dryrun ? FileUtils::DryRun : FileUtils
@@ -40,7 +41,7 @@ end
 class RDoc::Generator::Shomen
 
   # Register shomen generator with RDoc.
-  RDoc::RDoc.add_generator self
+  RDoc::RDoc.add_generator(self)
 
   # Base of file name used to save output.
   FILENAME = "shomen"
@@ -162,6 +163,11 @@ class RDoc::Generator::Shomen
   # RDoc needs this to function.
   def file_dir  ; nil ; end
 
+  #
+  def shomen
+    @table || {}
+  end
+
   # Build the initial indices and output objects
   # based on an array of top level objects containing
   # the extracted information.
@@ -179,13 +185,13 @@ class RDoc::Generator::Shomen
 
     #pp table if $DEBUG
 
-    #file = File.join(@path_output, 'rdoc.jsync')
+    #file = File.join(path_output, FILENAME)
 
-    yaml = @table.to_yaml
-    File.open(FILENAME + '.yaml', 'w'){ |f| f << yaml }
+    #yaml = @table.to_yaml
+    #File.open(file + '.yaml', 'w'){ |f| f << yaml }
 
-    json = JSON.generate(@table)
-    File.open(FILENAME + '.json', 'w'){ |f| f << json }
+    #json = JSON.generate(@table)
+    #File.open(file + '.json', 'w'){ |f| f << json }
 
     # TODO: Internal referencing model, YAML and JSYNC ?
 
