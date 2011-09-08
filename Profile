@@ -1,6 +1,6 @@
 --- 
 title: Shomen
-summary: Standardized Ruby Documentation Format
+summary: Standardized Object-Oriented Documentation Format
 authors: Thomas Sawyer <transfire@gmail.com>
 created: 2010-07-01
 
