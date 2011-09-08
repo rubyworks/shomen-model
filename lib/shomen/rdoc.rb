@@ -24,19 +24,23 @@ require 'rdoc/rdoc'
 require 'rdoc/generator'
 require 'rdoc/generator/markup'
 
+require 'shomen/model'
+
 #require 'shomen/metadata'
 
 ## TODO: Is this needed?
 ## TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
-def fileutils
-  $dryrun ? FileUtils::DryRun : FileUtils
-end
+#def fileutils
+#  $dryrun ? FileUtils::DryRun : FileUtils
+#end
 
 # Shomen Adaptor for RDoc
 #
 # Of course RDoc is almost entirely a free-form documentation system,
 # so it is not possible for Shomen to fully harness all the details it
 # can support from the RDoc documentation.
+#
+# NOTE: This is probably slightly out of date with the current spec.
 
 class RDoc::Generator::Shomen
 
@@ -63,16 +67,15 @@ class RDoc::Generator::Shomen
   #  @all_classes_and_modules ||= RDoc::TopLevel.all_classes_and_modules
   #end
 
-  # In the world of the RDoc Generators #classes is the same as 
-  # #all_classes_and_modules. Well, except that its sorted too.
-  # For classes sans modules, see #types.
+  # In the world of the RDoc Generators #classes is the same
+  # as #all_classes_and_modules. Well, except that its sorted 
+  # too. For classes sans modules, see #types.
 
   def classes
     @classes ||= RDoc::TopLevel.all_classes_and_modules.sort
   end
 
   # Only toplevel classes and modules.
-
   def classes_toplevel
     @classes_toplevel ||= classes.select {|klass| !(RDoc::ClassModule === klass.parent) }
   end
@@ -128,13 +131,11 @@ class RDoc::Generator::Shomen
   #end
 
   #
-
   def files
     @files ||= RDoc::TopLevel.files
   end
 
   # List of toplevel files. RDoc supplies this via the #generate method.
-
   def files_toplevel
     @files_toplevel ||= (
       @files_rdoc.select{ |f| f.parser == RDoc::Parser::Simple }
@@ -150,6 +151,11 @@ class RDoc::Generator::Shomen
   # List of all methods in all classes and modules.
   def methods_all
     @methods_all ||= classes.map{ |m| m.method_list }.flatten.sort
+  end
+
+  # List of all attributes in all classes and modules.
+  def attributes_all
+    @attributes_all ||= classes.map{ |m| m.attributes }.flatten.sort
   end
 
   ## TODO: What's this then?
@@ -176,12 +182,13 @@ class RDoc::Generator::Shomen
 
     @table = {}
 
-    generate_metadata(@table)
-    generate_constants(@table)
-    generate_classes(@table)
-    generate_methods(@table)
-    generate_scripts(@table)   # have to do this last b/c it depends on the others
-    generate_files(@table)
+    generate_metadata   @table
+    generate_constants  @table
+    generate_classes    @table
+    generate_attributes @table
+    generate_methods    @table
+    generate_scripts    @table   # should be last b/c it depends on the others
+    generate_files      @table
 
     #pp table if $DEBUG
 
@@ -235,7 +242,7 @@ class RDoc::Generator::Shomen
         data["files"]      = ref_list(data["files"])
         data["superclass"] = ref_item(data["superclass"]) if data.key?("superclass")
       when 'method', 'function'
-        data["parent"]     = ref_item(data["parent"])
+        data["namespace"]  = ref_item(data["namespace"])
         data["file"]       = ref_item(data["file"])
       end
     end
@@ -379,12 +386,13 @@ protected
   #
   GEMSPEC_GLOB = '{.gemspec,*.gemspec}'
 
-  #
+  # Metadata follows the .ruby specification.
   def generate_metadata_from_gemspec(table)
     file = Dir[path_base + GEMSPEC_GLOB].first
     spec = RubyGems::Specification.new(file)  #?
     table['(metadata)'] = {
       "!"           => "metadata",
+      "key"         => "(metadata)",
       "name"        => spec.name,
       "title"       => spec.name.upcase,
       "version"     => spec.version.to_s,
@@ -396,29 +404,28 @@ protected
     }
   end
 
-  #
+  # Add constants to table.
   def generate_constants(table)
     debug_msg "Generating constant documentation:"
     classes.each do |base|
       base.constants.each do |c|
         full_name = "#{base.full_name}::#{c.name}"
-        debug_msg "%s" % [full_name]
-        table[full_name] = {
-          "!"         => "constant",
+        #debug_msg "%s" % [full_name]
+        table[full_name] = Shomen::Model::Constant.new(
+          "key"       => full_name,
           "name"      => c.name,
           "namespace" => "#{base.full_name}",
           "comment"   => c.comment, # description
           "value"     => c.value
-        }
+        ).to_h
       end
     end
     return table     
   end
 
-  # Generate a documentation file for each class
+  # Add classes to table.
   def generate_classes(table)
     debug_msg "Generating class documentation:"
-
     classes.each do |c|
       debug_msg "%s (%s)" % [ c.full_name, c.path ]
       #outfile    = self.path_output + klass.path
@@ -426,22 +433,37 @@ protected
       #debug_msg "rendering #{path_output_relative(outfile)}"
       #self.render_template(templatefile, outfile, :klass=>klass, :rel_prefix=>rel_prefix)
 
-      data = {}
-      data["!"]          = (c.type == 'class' ? "class" : "module")
-      data["name"]       = c.name
-      data["namespace"]  = c.full_name.split('::')[0...-1].join('::')
-      data["includes"]   = c.includes.map{ |x| x.name }
-      #data["extended"]  = []  # TODO: how?
-      data["comment"]    = c.comment
-      data["constants"]  = c.constants.map{ |x| complete_name(x.name, c.full_name) }
-      data["modules"]    = c.modules.map{ |x| complete_name(x.name, c.full_name) }
-      data["classes"]    = c.classes.map{ |x| complete_name(x.name, c.full_name) }
-      data["functions"]  = collect_methods(c, true)
-      data["methods"]    = collect_methods(c, false)
-      data["files"]      = c.in_files.map{ |x| x.full_name }
-      data["superclass"] = c.superclass if c.type == 'class'
-
-      table[c.full_name] = data
+      # HACK: No idea why RDoc is returning some weird superclass:
+      #   <RDoc::NormalClass:0xd924d4 class Object < BasicObject includes: []
+      #     attributes: [] methods: [#<RDoc::AnyMethod:0xd92b8c Object#fileutils
+      #     (public)>] aliases: []>
+      # Maybe it has something to do with #fileutils?
+      if c.type == 'class'
+        superclass = (String === c.superclass ? c.superclass.to_s : c.superclass.name)
+      else
+        superclass = nil
+      end
+      model_class = (c.type=='class' ? Shomen::Model::Class : Shomen::Model::Module)
+      model = model_class.new(
+        "key"        => c.full_name,
+        "name"       => c.name,
+        "namespace"  => c.full_name.split('::')[0...-1].join('::'),
+        "includes"   => c.includes.map{ |x| x.name },
+        #"extended"  => []  # TODO: how?
+        "comment"    => c.comment,
+        "constants"  => c.constants.map{ |x| complete_name(x.name, c.full_name) },
+        "modules"    => c.modules.map{ |x| complete_name(x.name, c.full_name) },
+        "classes"    => c.classes.map{ |x| complete_name(x.name, c.full_name) },
+        "functions"  => collect_methods(c, true),
+        "methods"    => collect_methods(c, false),
+        "attributes" => collect_attributes(c, false),
+        "class_attributes" => collect_attributes(c, true),
+        "files"      => c.in_files.map{ |x| x.full_name }
+      )
+      if c.type == 'class'
+        model["superclass"] = superclass || 'Object'
+      end
+      table[c.full_name]  = model.to_h
     end
     return table
   end
@@ -456,9 +478,9 @@ protected
   end
 
   #
-  def generate_methods(table)
-    debug_msg "Generating method documentation:"
-    methods_all.each do |m|
+  def generate_attributes(table)
+    debug_msg "Generating attributes documentation:"
+    attributes_all.each do |m|
       debug_msg "%s" % [m.full_name]
 
       code       = m.source_code_raw
@@ -469,10 +491,54 @@ protected
       #'prettyname'   => m.pretty_name,
       #'type'         => m.type, # class or instance
 
-      table[full_name] = {
-        '!'            => (m.singleton ? 'function' : 'method'),
+      #model_class = m.singleton ? Shomen::Model::Function : Shomen::Model::Method
+      model_class = Shomen::Model::Attribute
+
+      table[full_name] = model_class.new(
+        'key'          => full_name,
         'name'         => m.name,
-        'parent'       => m.parent_name,
+        'namespace'    => m.parent_name,
+        'comment'      => m.comment,
+        'access'       => m.visibility.to_s,
+        'rw'           => m.rw,  # TODO: better name ?
+        'singleton'    => m.singleton,
+        'aliases'      => m.aliases.map{ |a| method_name(a) },
+        'alias_for'    => method_name(m.is_alias_for),
+        'image'        => m.params,
+        'arguments'    => [],
+        'parameters'   => [],
+        'block'        => m.block_params, # TODO: what is block?
+        'interface'    => m.arglists,
+        'returns'      => [],
+        'file'         => file,
+        'line'         => line,
+        'source'       => code
+      ).to_h
+    end
+    return table
+  end
+
+  #
+  def generate_methods(table)
+    debug_msg "Generating method documentation:"
+    methods_all.each do |m|
+      debug_msg "%s" % [m.full_name]
+
+      code       = m.source_code_raw
+      file, line = m.source_code_location
+
+      full_name  = method_name(m)
+
+      #'prettyname'   => m.pretty_name,
+      #'type'         => m.type, # class or instance
+
+      #model_class = m.singleton ? Shomen::Model::Function : Shomen::Model::Method
+      model_class = Shomen::Model::Method
+
+      table[full_name] = model_class.new(
+        'key'          => full_name,
+        'name'         => m.name,
+        'namespace'    => m.parent_name,
         'comment'      => m.comment,
         'access'       => m.visibility.to_s,
         'singleton'    => m.singleton,
@@ -487,7 +553,7 @@ protected
         'file'         => file,
         'line'         => line,
         'source'       => code
-      }
+      ).to_h
     end
     return table
   end
@@ -525,10 +591,11 @@ protected
         h['!'] == 'method' && h['file'] == file.full_name
       }.map{ |k, h| k }
 
-      table[file.full_name] = {
-        "!"          => "script",
+      table[file.full_name] = Shomen::Model::Script.new(
+        "key"        => file.full_name,
         "name"       => File.basename(file.full_name),
-        "path"       => File.dirname(file.full_name),
+        "parent"     => File.dirname(file.full_name),
+        "path"       => file.full_name,
         "mtime"      => File.mtime(abspath),
         "header"     => "", # TODO
         "footer"     => "", # TODO
@@ -537,8 +604,9 @@ protected
         "modules"    => modules,   #file.modules.map{ |x| x.name },
         "classes"    => classes,   #file.classes.map{ |x| x.name },
         "functions"  => functions, #collect_methods(file, true),
-        "methods"    => methods    #collect_methods(file, false)
-      }
+        "methods"    => methods,    #collect_methods(file, false)
+        "source"     => File.read(abspath)
+      ).to_h
 
       #self.render_template(templatefile, outfile, :file=>file, :rel_prefix=>rel_prefix)
     end
@@ -549,13 +617,14 @@ protected
   def generate_files(table)
     files_toplevel.each do |file|
       abspath = File.join(path_base, file.full_name)
-      table[file.full_name] = {
-        "!"     => "file",
-        "name"  => File.basename(file.full_name),
-        "path"  => File.dirname(file.full_name),
-        "mtime" => File.mtime(abspath),
-        "text"  => File.read(abspath) #file.comment
-      }
+      table[file.full_name] = Shomen::Model::Document.new(
+        "key"    => file.full_name,
+        "name"   => File.basename(file.full_name),
+        "parent" => File.dirname(file.full_name),
+        "path"   => file.full_name,
+        "mtime"  => File.mtime(abspath),
+        "text"   => File.read(abspath) #file.comment
+      ).to_h
     end
   end
 
@@ -566,15 +635,20 @@ protected
       next if singleton ^ m.singleton
       list << method_name(m)
     end
+    list.uniq
+  end
+
+  def collect_attributes(class_module, singleton=false)
+    list = []
     class_module.attributes.each do |a|
       next if singleton ^ a.singleton
       #p a.rw
-      case a.rw
-      when :write
-        list << "#{method_name(a)}="
-      else
+      #case a.rw
+      #when :write, 'W'
+      #  list << "#{method_name(a)}="
+      #else
         list << method_name(a)
-      end
+      #end
     end
     list.uniq
   end
@@ -601,6 +675,165 @@ protected
     end
     $stderr.puts(tab + msg)
   end
+
+end
+
+# DEPRECATE ASAP
+require "rdoc/parser/c"
+# New RDoc somehow misses class comemnts.
+# copyied this function from "2.2.2" 
+if ['2.4.2', '2.4.3'].include? RDoc::VERSION
+  class RDoc::Parser::C
+    def find_class_comment(class_name, class_meth)
+      comment = nil
+      if @content =~ %r{((?>/\*.*?\*/\s+))
+                     (static\s+)?void\s+Init_#{class_name}\s*(?:_\(\s*)?\(\s*(?:void\s*)\)}xmi then
+        comment = $1
+      elsif @content =~ %r{Document-(?:class|module):\s#{class_name}\s*?(?:<\s+[:,\w]+)?\n((?>.*?\*/))}m
+        comment = $1
+      else
+        if @content =~ /rb_define_(class|module)/m then
+          class_name = class_name.split("::").last
+          comments = []
+          @content.split(/(\/\*.*?\*\/)\s*?\n/m).each_with_index do |chunk, index|
+            comments[index] = chunk
+            if chunk =~ /rb_define_(class|module).*?"(#{class_name})"/m then
+              comment = comments[index-1]
+              break
+            end
+          end
+        end
+      end
+      class_meth.comment = mangle_comment(comment) if comment
+    end
+  end
+end
+
+
+class RDoc::TopLevel
+  #
+  def to_h
+    {
+       :path     => path,
+       :name     => base_name,
+       :fullname => full_name,
+       :rootname => absolute_name,
+       :modified => last_modified,
+       :diagram  => diagram
+    }
+  end
+
+  #
+  #def to_json
+  #  to_h.to_json
+  #end
+end
+
+
+class RDoc::ClassModule
+  #
+  def with_documentation?
+    document_self_or_methods || classes_and_modules.any?{ |c| c.with_documentation? }
+  end
+
+  #
+  def document_self_or_methods
+    document_self || method_list.any?{ |m| m.document_self }
+  end
+
+#  #
+#  def to_h
+#    {
+#      :name       => name,
+#      :fullname   => full_name,
+#      :type       => type,
+#      :path       => path,
+#      :superclass => module? ? nil : superclass
+#    }
+#  end
+#
+#  def to_json
+#    to_h.to_json
+#  end
+end
+
+
+module RDoc::SourceCodeAccess
+
+  #
+  def source_code_raw
+    return '' unless @token_stream
+    src = ""
+    @token_stream.each do |t|
+      next unless t
+      src << t.text
+    end
+    #add_line_numbers(src)
+    src
+  end
+
+  #
+  def source_code_location
+    src = source_code_raw
+    if md = /File (.*?), line (\d+)/.match(src)
+      file = md[1]
+      line = md[2]
+    else
+      file = "(unknown)"
+      line = 0
+    end
+    return file, line
+  end
+
+end
+
+
+class RDoc::AnyMethod
+  include RDoc::SourceCodeAccess
+
+#  # NOTE: dont_rename_initialize isn't used
+#  def to_h
+#    {
+#      :name         => name,
+#      :fullname     => full_name,
+#      :prettyname   => pretty_name,
+#      :path         => path,
+#      :type         => type,
+#      :visibility   => visibility,
+#      :blockparams  => block_params,
+#      :singleton    => singleton,
+#      :text         => text,
+#      :aliases      => aliases,
+#      :aliasfor     => is_alias_for,
+#      :aref         => aref,
+#      :parms        => params,
+#      :callseq      => call_seq
+#      #:paramseq     => param_seq,
+#    }
+#  end
+
+#  #
+#  def to_json
+#    to_h.to_json
+#  end
+end
+
+class RDoc::Attr
+  include RDoc::SourceCodeAccess
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 =begin
   #
@@ -749,142 +982,4 @@ protected
     end
   end
 =end
-
-end
-
-
-require "rdoc/parser/c"
-
-# New RDoc somehow misses class comemnts.
-# copyied this function from "2.2.2" 
-if ['2.4.2', '2.4.3'].include? RDoc::VERSION
-  class RDoc::Parser::C
-    def find_class_comment(class_name, class_meth)
-      comment = nil
-      if @content =~ %r{((?>/\*.*?\*/\s+))
-                     (static\s+)?void\s+Init_#{class_name}\s*(?:_\(\s*)?\(\s*(?:void\s*)\)}xmi then
-        comment = $1
-      elsif @content =~ %r{Document-(?:class|module):\s#{class_name}\s*?(?:<\s+[:,\w]+)?\n((?>.*?\*/))}m
-        comment = $1
-      else
-        if @content =~ /rb_define_(class|module)/m then
-          class_name = class_name.split("::").last
-          comments = []
-          @content.split(/(\/\*.*?\*\/)\s*?\n/m).each_with_index do |chunk, index|
-            comments[index] = chunk
-            if chunk =~ /rb_define_(class|module).*?"(#{class_name})"/m then
-              comment = comments[index-1]
-              break
-            end
-          end
-        end
-      end
-      class_meth.comment = mangle_comment(comment) if comment
-    end
-  end
-end
-
-
-class RDoc::TopLevel
-  #
-  def to_h
-    {
-       :path     => path,
-       :name     => base_name,
-       :fullname => full_name,
-       :rootname => absolute_name,
-       :modified => last_modified,
-       :diagram  => diagram
-    }
-  end
-
-  #
-  def to_json
-    to_h.to_json
-  end
-end
-
-
-class RDoc::ClassModule
-  #
-  def with_documentation?
-    document_self_or_methods || classes_and_modules.any?{ |c| c.with_documentation? }
-  end
-
-  #
-  def document_self_or_methods
-    document_self || method_list.any?{ |m| m.document_self }
-  end
-
-#  #
-#  def to_h
-#    {
-#      :name       => name,
-#      :fullname   => full_name,
-#      :type       => type,
-#      :path       => path,
-#      :superclass => module? ? nil : superclass
-#    }
-#  end
-#
-#  def to_json
-#    to_h.to_json
-#  end
-end
-
-
-class RDoc::AnyMethod
-
-#  # NOTE: dont_rename_initialize isn't used
-#  def to_h
-#    {
-#      :name         => name,
-#      :fullname     => full_name,
-#      :prettyname   => pretty_name,
-#      :path         => path,
-#      :type         => type,
-#      :visibility   => visibility,
-#      :blockparams  => block_params,
-#      :singleton    => singleton,
-#      :text         => text,
-#      :aliases      => aliases,
-#      :aliasfor     => is_alias_for,
-#      :aref         => aref,
-#      :parms        => params,
-#      :callseq      => call_seq
-#      #:paramseq     => param_seq,
-#    }
-#  end
-
-#  #
-#  def to_json
-#    to_h.to_json
-#  end
-
-  #
-  def source_code_raw
-    return '' unless @token_stream
-    src = ""
-    @token_stream.each do |t|
-      next unless t
-      src << t.text
-    end
-    #add_line_numbers(src)
-    src
-  end
-
-  #
-  def source_code_location
-    src = source_code_raw
-    if md = /File (.*?), line (\d+)/.match(src)
-      file = md[1]
-      line = md[2]
-    else
-      file = "(unknown)"
-      line = 0
-    end
-    return file, line
-  end
-
-end
 

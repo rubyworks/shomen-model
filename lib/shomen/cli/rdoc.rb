@@ -3,6 +3,9 @@ module Shomen
   require 'shomen/cli/abstract'
   require 'tmpdir'
 
+  begin; gem 'json'; rescue; end
+  require 'json'; 
+
   module CLI
 
     # RDoc command line interface.
@@ -78,9 +81,9 @@ module Shomen
         rdoc.document(rdoc_options)
 
         if options[:format] == :yaml
-          $stdout.puts rdoc.generator.shomen.to_yaml
+          $stdout.puts(rdoc.generator.shomen.to_yaml)
         else
-          $stdout.puts rdoc.generator.shomen.to_json
+          $stdout.puts(JSON.generate(rdoc.generator.shomen))
         end
       end
 
