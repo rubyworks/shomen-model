@@ -1,0 +1,59 @@
+== Module Documentation
+
+=== Simple Example with a Barren Module
+
+Given a file +lib/example.rb+ containing a minimally documented and
+essentially barren class:
+
+    # This module is documented.
+    module ExampleModule
+    end
+
+Running the script through shomen command line interface, regardless of which
+underlying parser is used, should produce a data structure conforming to the
+Shomen standard data format having the following characteristics.
+
+The data structure should have three entries.
+
+  @shomen.keys.assert.include?('(metadata)')
+  @shomen.keys.assert.include?('ExampleModule')
+  @shomen.keys.assert.include?('/lib/example.rb')
+
+The `ExampleModule` entry should have a "bang" type of `module`.
+
+  @shomen['ExampleModule']['!']  #=> 'module'
+
+It should have a name of `ExampleModule`.
+
+  @shomen['ExampleModule']['name']  #=> 'ExampleModule'
+
+While the namespace should be an empty string because the class is defined
+at the toplevel.
+
+  @shomen['ExampleModule']['namespace']  #=> ''
+
+The full `path` field will be the same as the name for the same reason.
+
+  @shomen['ExampleModule']['path']  #=> 'ExampleModule'
+
+As a module it should not have a `superclass` entry.
+
+  @shomen['ExampleModule'].refute.key?('superclass')
+
+The `comment` field will as given in the script.
+
+  @shomen['ExampleModule']['comment']  #=> "This module is documented."
+
+And the `files` field should list only `lib/example.rb`.
+
+  @shomen['ExampleModule']['files']  #=> ['/lib/example.rb']
+
+Since out example class is barren the remaining fields will either be 
+missing (i.e. `nil`) or empty collections.
+
+  @shomen['ExampleModule']['constants'].to_a      #=> []
+  @shomen['ExampleModule']['modules'].to_a        #=> []
+  @shomen['ExampleModule']['classes'].to_a        #=> []
+  @shomen['ExampleModule']['methods'].to_a        #=> []
+  @shomen['ExampleModule']['class-methods'].to_a  #=> []
+

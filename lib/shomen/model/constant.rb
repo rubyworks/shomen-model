@@ -18,8 +18,15 @@ module Shomen
       #
       attr_accessor :comment
 
+      # Format of comment (rdoc, markdown or plain).
+      attr_accessor :format
+
       #
       attr_accessor :value
+
+      #
+      attr_accessor :files
+
     end
 
   end

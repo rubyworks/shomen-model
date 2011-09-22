@@ -1,0 +1,59 @@
+== Constant Documentation
+
+=== Class/Module Constant
+
+Given a file +lib/example.rb+ containing a documented constant in a class
+(or module):
+
+    class ExampleClass
+      # This constant is documented.
+      ExampleConstant = "example"
+    end
+
+Running the script through shomen command line interface, regardless of which
+underlying parser is used, should produce a data structure conforming to the
+Shomen standard data format having the following characteristics.
+
+The data structure should have four entries.
+
+  @shomen.keys.size  #=> 4
+
+  @shomen.keys.assert.include?('(metadata)')
+  @shomen.keys.assert.include?('ExampleClass')
+  @shomen.keys.assert.include?('ExampleClass::ExampleConstant')
+  @shomen.keys.assert.include?('/lib/example.rb')
+
+We want to inspect the constant entry itself, so we will assign the entry
+to a variable to ease readability.
+
+  constant = @shomen['ExampleClass::ExampleConstant']
+
+The `ExampleConstant` entry should have a "bang" type of `constant`.
+
+  constant['!']          #=> 'constant'
+
+It should have a name of `ExampleConstant`.
+
+  constant['name']       #=> 'ExampleConstant'
+
+While the namespace should be `ExampleClass`.
+
+  constant['namespace']  #=> 'ExampleClass'
+
+The full `path` field will be the same as the name for the same reason.
+
+  constant['path']       #=> 'ExampleClass::ExampleConstant'
+
+The `comment` field will as given in the script.
+
+  constant['comment']    #=> "This constant is documented."
+
+And the `files` field should list only `lib/example.rb`.
+
+  constant['files']      #=> ['/lib/example.rb']
+
+Lastly, the `value` field should contain the value the literal representation
+of the value to which the constant is set.
+
+  constant['value']      #=> '"example"'
+

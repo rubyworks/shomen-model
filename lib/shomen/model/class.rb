@@ -1,11 +1,11 @@
 module Shomen
 
   module Model
-
     require 'shomen/model/module'
 
     #
     class Class < Module
+
       #
       def self.type; 'class'; end
 

@@ -1,10 +1,12 @@
 module Shomen
 
+  require 'shomen/core_ext/hash'
+
   module Model
 
     # Baseclass for all model classes.
     #
-    class Abstract
+    class AbstractPrime
       #
       def self.attr_accessor(name)
         name = name.to_s
@@ -23,21 +25,11 @@ module Shomen
 
       #
       def initialize(settings={})
-        @table = { '!' => self.class.type }
+        @table = {}
         settings.each do |k,v|
-          __send__("#{k}=",v)
+          s = "#{k}=".gsub('-','_')
+          __send__(s,v)
         end
-      end
-
-      # Full name.
-      attr_accessor :key
-
-      #
-      alias :fullname :key
-
-      # Type is always 'constant'.
-      def type
-        self['!']
       end
 
       #
@@ -52,7 +44,37 @@ module Shomen
 
       #
       def to_h
-        @table.dup
+        t = {}
+        @table.each do |k,v|
+          if v.respond_to?(:to_h)
+            t[k] = v.to_h
+          else
+            t[k] = v
+          end
+        end
+        t
+      end
+
+    end
+
+    #
+    class Abstract < AbstractPrime
+
+      #
+      def initialize(settings={})
+        super(settings)
+        @table['!'] = self.class.type
+      end
+
+      # Full name.
+      attr_accessor :path
+
+      # Hash of label => description.
+      attr_accessor :tags
+
+      #
+      def type
+        self['!']
       end
 
     end

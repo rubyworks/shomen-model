@@ -15,6 +15,10 @@ module Shomen
       # Route textto source.
       alias :text  :source
       alias :text= :source=
+
+      #
+      attr_accessor :language
+
       #
       attr_accessor :name
 
@@ -34,7 +38,7 @@ module Shomen
 
       attr_accessor :classes
 
-      attr_accessor :functions
+      attr_accessor :class_methods
 
       attr_accessor :methods
 

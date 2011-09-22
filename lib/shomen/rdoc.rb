@@ -7,15 +7,7 @@
 #rescue
 #end
 
-#if Gem.available? "json"
-#  gem "json", ">= 1.1.3"
-#else
-#  gem "json_pure", ">= 1.1.3"
-#end
-#require 'json'
-
 require 'fileutils'
-require 'pp'
 require 'pathname'
 require 'yaml'
 require 'json'
@@ -24,35 +16,23 @@ require 'rdoc/rdoc'
 require 'rdoc/generator'
 require 'rdoc/generator/markup'
 
-require 'shomen/model'
+require 'shomen/metadata'
+require 'shomen/model'  # TODO: have metadata in model
+require 'shomen/rdoc/extensions'
 
-#require 'shomen/metadata'
-
-## TODO: Is this needed?
-## TODO: options = { :verbose => $DEBUG_RDOC, :noop => $dryrun }
-#def fileutils
-#  $dryrun ? FileUtils::DryRun : FileUtils
-#end
-
-# Shomen Adaptor for RDoc
+# Shomen Adaptor for RDoc utilizes the rdoc tool to parse ruby source code
+# to build a Shomen documenation file.
 #
-# Of course RDoc is almost entirely a free-form documentation system,
-# so it is not possible for Shomen to fully harness all the details it
-# can support from the RDoc documentation.
-#
-# NOTE: This is probably slightly out of date with the current spec.
+# RDoc is almost entirely a free-form documentation system, so it is not
+# possible for Shomen to fully harness all the details it can support from
+# the RDoc documentation, such as method argument descriptions.
 
 class RDoc::Generator::Shomen
 
   # Register shomen generator with RDoc.
   RDoc::RDoc.add_generator(self)
 
-  # Base of file name used to save output.
-  FILENAME = "shomen"
-
   #include RDocShomen::Metadata
-
-  #PATH = Pathname.new(File.dirname(__FILE__))
 
   # Standard generator factory method.
   def self.for(options)
@@ -79,56 +59,6 @@ class RDoc::Generator::Shomen
   def classes_toplevel
     @classes_toplevel ||= classes.select {|klass| !(RDoc::ClassModule === klass.parent) }
   end
-
-  ## Documented classes and modules sorted by salience first, then by name.
-  #def classes_salient
-  #  @classes_salient ||= sort_salient(classes)
-  #end
-
-  #
-  #def classes_hash
-  #  @classes_hash ||= RDoc::TopLevel.modules_hash.merge(RDoc::TopLevel.classes_hash)
-  #end
-
-  #
-  #def modules
-  #  @modules ||= RDoc::TopLevel.modules.sort
-  #end
-
-  #
-  #def modules_toplevel
-  #  @modules_toplevel ||= modules.select {|klass| !(RDoc::ClassModule === klass.parent) }
-  #end
-
-  #
-  #def modules_salient
-  #  @modules_salient ||= sort_salient(modules)
-  #end
-
-  #
-  #def modules_hash
-  #  @modules_hash ||= RDoc::TopLevel.modules_hash
-  #end
-
-  #
-  #def types
-  #  @types ||= RDoc::TopLevel.classes.sort
-  #end
-
-  #
-  #def types_toplevel
-  #  @types_toplevel ||= types.select {|klass| !(RDoc::ClassModule === klass.parent) }
-  #end
-
-  #
-  #def types_salient
-  #  @types_salient ||= sort_salient(types)
-  #end
-
-  #
-  #def types_hash
-  #  @types_hash ||= RDoc::TopLevel.classes_hash
-  #end
 
   #
   def files
@@ -158,6 +88,11 @@ class RDoc::Generator::Shomen
     @attributes_all ||= classes.map{ |m| m.attributes }.flatten.sort
   end
 
+  #
+  def constants_all
+    @constants_all ||= classes.map{ |c| c.constants }.flatten
+  end
+
   ## TODO: What's this then?
   ##def json_creatable?
   ##  RDoc::TopLevel.json_creatable?
@@ -169,7 +104,7 @@ class RDoc::Generator::Shomen
   # RDoc needs this to function.
   def file_dir  ; nil ; end
 
-  #
+  # TODO: Rename ?
   def shomen
     @table || {}
   end
@@ -182,35 +117,428 @@ class RDoc::Generator::Shomen
 
     @table = {}
 
-    generate_metadata   @table
-    generate_constants  @table
-    generate_classes    @table
-    generate_attributes @table
-    generate_methods    @table
-    generate_scripts    @table   # should be last b/c it depends on the others
-    generate_files      @table
-
-    #pp table if $DEBUG
-
-    #file = File.join(path_output, FILENAME)
-
-    #yaml = @table.to_yaml
-    #File.open(file + '.yaml', 'w'){ |f| f << yaml }
-
-    #json = JSON.generate(@table)
-    #File.open(file + '.json', 'w'){ |f| f << json }
+    generate_metadata
+    generate_constants
+    generate_classes
+    #generate_attributes
+    generate_methods
+    generate_documents
+    generate_scripts   # must be last b/c it depends on the others
 
     # TODO: Internal referencing model, YAML and JSYNC ?
-
     #ref_table = reference_table(@table)
-    #yaml = ref_table.to_yaml
-    #File.open(FILENAME + '-ref.yaml', 'w'){ |f| f << yaml }
 
   #rescue StandardError => err
   #  debug_msg "%s: %s\n  %s" % [ err.class.name, err.message, err.backtrace.join("\n  ") ]
   #  raise err
   end
 
+
+protected
+
+  #
+  def initialize(options)
+    @options = options
+    #@options.diagram = false  # why?
+
+    @path_base   = Pathname.pwd.expand_path
+    @path_output = Pathname.new(@options.op_dir).expand_path(@path_base)
+  end
+
+  # Current pathname.
+  attr :path_base
+
+  # The output path.
+  attr :path_output
+
+  #
+  def path_output_relative(path=nil)
+    if path
+      path.to_s.sub(path_base.to_s+'/', '')
+    else
+      @path_output_relative ||= path_output.to_s.sub(path_base.to_s+'/', '')
+    end
+  end
+
+  #
+  def generate_metadata
+    metadata = Shomen::Metadata.new
+    @table['(metadata)'] = metadata.to_h
+  end
+
+  # Add constants to table.
+  def generate_constants
+    debug_msg "Generating constant documentation:"
+    constants_all.each do |rdoc|
+      model = Shomen::Model::Constant.new
+
+      model.path      = rdoc.parent.full_name + '::' + rdoc.name
+      model.name      = rdoc.name
+      model.namespace = rdoc.parent.full_name
+      model.comment   = rdoc.comment
+      model.format    = 'rdoc'
+      model.value     = rdoc.value
+      model.files     = ["/#{rdoc.file.full_name}"]
+
+      @table[model.path] = model.to_h
+    end
+  end
+
+  # Add classes (and modules) to table.
+  def generate_classes
+    debug_msg "Generating class/module documentation:"
+
+    classes.each do |rdoc_class|
+      debug_msg "%s (%s)" % [ rdoc_class.full_name, rdoc_class.path ]
+
+      if rdoc_class.type=='class'
+        model = Shomen::Model::Class.new
+      else
+        model = Shomen::Model::Module.new
+      end
+
+      model.path             = rdoc_class.full_name
+      model.name             = rdoc_class.name
+      model.namespace        = rdoc_class.full_name.split('::')[0...-1].join('::')
+      model.includes         = rdoc_class.includes.map{ |x| x.name }  # FIXME: How to "lookup" full name?
+      model.extensions       = []                                     # TODO:  How to get extensions?
+      model.comment          = rdoc_class.comment
+      model.format           = 'rdoc'
+      model.constants        = rdoc_class.constants.map{ |x| complete_name(x.name, rdoc_class.full_name) }
+      model.modules          = rdoc_class.modules.map{ |x| complete_name(x.name, rdoc_class.full_name) }
+      model.classes          = rdoc_class.classes.map{ |x| complete_name(x.name, rdoc_class.full_name) }
+      model.methods          = collect_methods(rdoc_class, false)
+      model.class_methods    = collect_methods(rdoc_class, true)
+      #model.attributes       = collect_attributes(rdoc_class, false)
+      #model.class_attributes = collect_attributes(rdoc_class, true)
+      model.files            = rdoc_class.in_files.map{ |x| "/#{x.full_name}" }
+
+      if rdoc_class.type == 'class'
+        # HACK: No idea why RDoc is returning some weird superclass:
+        #   <RDoc::NormalClass:0xd924d4 class Object < BasicObject includes: []
+        #     attributes: [] methods: [#<RDoc::AnyMethod:0xd92b8c Object#fileutils
+        #     (public)>] aliases: []>
+        # Maybe it has something to do with #fileutils?
+        model.superclass = (
+          if String === rdoc_class.superclass
+            rdoc_class.superclass.to_s 
+          else
+            rdoc_class.superclass.name
+          end
+        )
+      end
+
+      @table[model.path] = model.to_h
+    end
+  end
+
+  # Transform RDoc methods to Shomen model and add to table.
+  #
+  # TODO: How to get literal interface separate from call-sequnces?
+  def generate_methods
+    debug_msg "Generating method documentation:"
+
+    methods_all.each do |rdoc_method|
+      #debug_msg "%s" % [rdoc_method.full_name]
+
+      #full_name  = method_name(m)
+      #'prettyname'   => m.pretty_name,
+      #'type'         => m.type, # class or instance
+
+      model = Shomen::Model::Method.new
+
+      model.path        = method_name(rdoc_method)
+      model.name        = rdoc_method.name
+      model.namespace   = rdoc_method.parent_name
+      model.comment     = rdoc_method.comment
+      model.format      = 'rdoc'
+      model.access      = rdoc_method.visibility.to_s
+      model.singleton   = rdoc_method.singleton
+      model.aliases     = rdoc_method.aliases.map{ |a| method_name(a) }
+      model.alias_for   = method_name(rdoc_method.is_alias_for)
+
+      model.signatures  = []
+      model.signatures << parse_interface(rdoc_method.name + rdoc_method.params)
+      if rdoc_method.call_seq
+        rdoc_method.call_seq.split("\n").each do |cs|
+          model.signatures << parse_interface(cs)
+        end
+      end
+
+      model.returns    = []  # RDoc doesn't support specifying return values
+      model.file       = rdoc_method.source_code_location.first
+      model.line       = rdoc_method.source_code_location.last.to_i
+      model.source     = rdoc_method.source_code_raw
+      model.language   = rdoc_method.c_function ? 'c' : 'ruby'
+
+      @table[model.path] = model.to_h
+    end
+  end
+
+=begin
+  #
+  def parse_arguments(rdoc_method)
+    args, block  = [], nil
+
+    rdoc_method.param_list.each do |a|
+      if a.start_with?('&')
+        block = {'name'=>a}
+      else
+        n,v = a.split('=')
+        args << (v ? {'name'=>n,'default'=>v} : {'name'=>n})
+      end
+    end
+
+    return args, block
+  end
+=end
+
+  #
+  # TODO: remove any trailing comment too
+  def parse_interface(interface)
+    args, block = [], {}
+
+    interface, returns = interface.split(/[=-]>/)
+    interface = interface.strip
+    if i = interface.index(/\)\s*\{/)
+      block['image'] = interface[i+1..-1].strip
+      interface      = interface[0..i].strip
+    end
+
+    arguments = interface.strip.sub(/^.*?\(/,'').chomp(')')
+    arguments = arguments.split(/\s*\,\s*/)
+    arguments.each do |a|
+      if a.start_with?('&')
+        block['name'] = a
+      else
+        n,v = a.split('=')
+        args << (v ? {'name'=>n,'default'=>v} : {'name'=>n})
+      end
+    end
+
+    result = {}
+    result['signature'] = interface
+    result['arguments'] = args
+    result['block']     = block unless block.empty?
+    result['returns']   = returns.strip if returns
+    return result
+  end
+  private :parse_interface
+
+=begin
+  #
+  def generate_attributes
+#$stderr.puts "HERE!"
+#$stderr.puts attributes_all.inspect
+#exit
+    debug_msg "Generating attributes documentation:"
+    attributes_all.each do |rdoc_attribute|
+      debug_msg "%s" % [rdoc_attribute.full_name]
+
+      adapter = Shomen::RDoc::MethodAdapter.new(rdoc_attribute)
+      data    = Shomen::Model::Method.new(adapter).to_h
+
+      @table[data['path']] = data
+
+      #code       = m.source_code_raw
+      #file, line = m.source_code_location
+
+      #full_name = method_name(m)
+
+      #'prettyname'   => m.pretty_name,
+      #'type'         => m.type, # class or instance
+
+      #model_class = m.singleton ? Shomen::Model::Function : Shomen::Model::Method
+      #model_class = Shomen::Model::Attribute
+
+      #@table[full_name] = model_class.new(
+      #  'path'         => full_name,
+      #  'name'         => m.name,
+      #  'namespace'    => m.parent_name,
+      #  'comment'      => m.comment,
+      #  'access'       => m.visibility.to_s,
+      #  'rw'           => m.rw,  # TODO: better name ?
+      #  'singleton'    => m.singleton,
+      #  'aliases'      => m.aliases.map{ |a| method_name(a) },
+      #  'alias_for'    => method_name(m.is_alias_for),
+      #  'image'        => m.params,
+      #  'arguments'    => [],
+      #  'parameters'   => [],
+      #  'block'        => m.block_params, # TODO: what is block?
+      #  'interface'    => m.arglists,
+      #  'returns'      => [],
+      #  'file'         => file,
+      #  'line'         => line,
+      #  'source'       => code
+      #).to_h
+    end
+  end
+=end
+
+  # TODO: Add loadpath and make file path relative to it?
+
+  # Generate script entries.
+  def generate_scripts
+    debug_msg "Generating file documentation in #{path_output_relative}:"
+    #templatefile = self.path_template + 'file.rhtml'
+
+    files.each do |rdoc_file|
+      debug_msg "%s" % [rdoc_file.full_name]
+
+      absolute_path = File.join(path_base, rdoc_file.full_name)
+      #rel_prefix  = self.path_output.relative_path_from(outfile.dirname)
+
+      model = Shomen::Model::Script.new
+
+      model.path      = rdoc_file.full_name
+      model.name      = File.basename(rdoc_file.full_name)
+      model.mtime     = File.mtime(absolute_path)
+      model.source    = File.read(absolute_path) #file.comment
+      model.language  = mime_type(absolute_path)
+      #model.header   =
+      #model.footer   =
+      model.requires  = rdoc_file.requires.map{ |r| r.name }
+      model.constants = rdoc_file.constants.map{ |c| c.full_name }
+
+      # note that this utilizes the table we are building
+      # so it needs to be the last thing done.
+      @table.each do |k, h|
+        case h['!']
+        when 'module'
+          model.modules ||= []
+          model.modules << k if h['files'].include?(rdoc_file.full_name)
+        when 'class'
+          model.classes ||= []
+          model.classes << k if h['files'].include?(rdoc_file.full_name)
+        when 'method'
+          model.methods ||= []
+          model.methods << k if h['file'] == rdoc_file.full_name
+        when 'class-method'
+          model.class_methods ||= []
+          model.class_methods << k if h['file'] == rdoc_file.full_name
+        end
+      end
+
+      @table['/'+model.path] = model.to_h
+    end
+  end
+
+  # Generate entries for information files, e.g. `README.rdoc`.
+  def generate_documents
+    files_toplevel.each do |rdoc_document|
+      absolute_path = File.join(path_base, rdoc_document.full_name)
+
+      model = Shomen::Model::Document.new
+
+      model.path   = rdoc_document.full_name
+      model.name   = File.basename(absolute_path)
+      model.mtime  = File.mtime(absolute_path)
+      model.text   = File.read(absolute_path) #file.comment
+      model.format = mime_type(absolute_path)
+
+      @table['/'+model.path] = model.to_h
+    end
+  end
+
+
+  # Returns String of fully qualified name.
+  def complete_name(name, namespace)
+    if name !~ /^#{namespace}/
+      "#{namespace}::#{name}"
+    else
+      name
+    end
+  end
+
+  #
+  def collect_methods(class_module, singleton=false)
+    list = []
+    class_module.method_list.each do |m|
+      next if singleton ^ m.singleton
+      list << method_name(m)
+    end
+    list.uniq
+  end
+
+  def collect_attributes(class_module, singleton=false)
+    list = []
+    class_module.attributes.each do |a|
+      next if singleton ^ a.singleton
+      #p a.rw
+      #case a.rw
+      #when :write, 'W'
+      #  list << "#{method_name(a)}="
+      #else
+        list << method_name(a)
+      #end
+    end
+    list.uniq
+  end
+
+  #
+  def method_name(method)
+    return nil if method.nil?
+    if method.singleton
+      i = method.full_name.rindex('::')     
+      method.full_name[0...i] + '.' + method.full_name[i+2..-1]
+    else
+      method.full_name
+    end
+  end
+
+  #
+  def mime_type(path)
+    case File.extname(path)
+    when '.rb', '.rbx' then 'text/ruby'
+    when '.c' then 'text/c-source'
+    when '.rdoc' then 'text/rdoc'
+    when '.md', '.markdown' then 'text/markdown'
+    else 'text/plain'
+    end
+  end
+
+  # Output progress information if rdoc debugging is enabled
+
+  def debug_msg(msg)
+    return unless $DEBUG_RDOC
+    case msg[-1,1]
+      when '.' then tab = "= "
+      when ':' then tab = "== "
+      else          tab = "* "
+    end
+    $stderr.puts(tab + msg)
+  end
+
+end
+
+
+
+
+=begin
+  #
+  # N O T  U S E D
+  #
+
+  # Sort based on how often the top level namespace occurs, and then on the
+  # name of the module -- this works for projects that put their stuff into
+  # a namespace, of course, but doesn't hurt if they don't.
+  def sort_salient(classes)
+    nscounts = classes.inject({}) do |counthash, klass|
+      top_level = klass.full_name.gsub( /::.*/, '' )
+      counthash[top_level] ||= 0
+      counthash[top_level] += 1
+      counthash
+    endfiles_toplevel
+    classes.sort_by{ |klass|
+      top_level = klass.full_name.gsub( /::.*/, '' )
+      [nscounts[top_level] * -1, klass.full_name]
+    }.select{ |klass|
+      klass.document_self
+    }
+  end
+=end
+
+=begin
   # Loop through table and convert all named references into bonofied object
   # references.
   def reference_table(table)
@@ -260,726 +588,4 @@ class RDoc::Generator::Shomen
     keys.map{ |k| @table[k] || nil }.compact
   end
 
-  #
-  #def metadata
-  #  @metadata ||= get_metadata
-  #end
-
-  # TODO: Need a better way to determine if POM::Metadata exists.
-  #def get_metadata
-  #  data = OpenStruct.new
-  #  begin
-  #    require 'gemdo/metadata'
-  #    pom = GemDo::Metadata.new(path_base)
-  #    raise LoadError unless pom.name
-  #    data.title       = pom.title
-  #    data.version     = pom.version
-  #    data.subtitle    = nil #pom.subtitle
-  #    data.homepage    = pom.homepage
-  #    data.resources   = pom.resources
-  #    data.mailinglist = pom.resources.mailinglist
-  #    data.development = pom.resources.development
-  #    data.forum       = pom.forum
-  #    data.wiki        = pom.wiki
-  #    data.blog        = pom.blog
-  #    data.copyright   = pom.copyright
-  #  rescue LoadError
-  #    if file = Dir[path_base + '*.gemspec'].first
-  #      gem = YAML.load(file)
-  #      data.title       = gem.title
-  #      data.version     = gem.version
-  #      data.subtitle    = nil
-  #      date.homepage    = gem.homepage
-  #      data.mailinglist = gem.email
-  #      data.development = nil
-  #      data.forum       = nil
-  #      data.wiki        = nil
-  #      data.blog        = nil
-  #      data.copyright   = nil
-  #    else
-  #      puts "No Metadata!"
-  #      # TODO: we may be able to develop some other hueristics here, but for now, nope.
-  #    end
-  #  end
-  #  return data
-  #end
-
-protected
-
-  #
-  def initialize(options)
-    @options = options
-    #@options.diagram = false  # why?
-
-    @path_base   = Pathname.pwd.expand_path
-    @path_output = Pathname.new(@options.op_dir).expand_path(@path_base)
-  end
-
-  # Current pathname.
-  attr :path_base
-
-  # The output path.
-  attr :path_output
-
-  #
-  def path_output_relative(path=nil)
-    if path
-      path.to_s.sub(path_base.to_s+'/', '')
-    else
-      @path_output_relative ||= path_output.to_s.sub(path_base.to_s+'/', '')
-    end
-  end
-
-  #
-  def generate_metadata(table)
-    begin
-      #require 'pom/project'
-      generate_metadata_from_spec(table)
-    rescue Exception => error
-      puts error
-      begin
-        if spec = Dir['*.gemspec'].first
-          require 'rubygems/specification'
-          generate_metadata_from_gemspec(table)
-        end
-      rescue Exception
-        debug_msg "Could not find any meatadata."
-      end
-    end
-  end
-
-  #
-  SPEC_GLOB = '{.ruby,.rubyspec}'
-
-  #
-  def generate_metadata_from_spec(table)
-    file = Dir[path_base + SPEC_GLOB].first
-    data = YAML.load(File.new(file))
-    table['(metadata)'] = {
-      "!"           => "metadata",
-      "name"        => data['name'],
-      "version"     => data['version'],
-      "title"       => data['title'],
-      "summary"     => data['summary'],
-      "description" => data['description'],
-      "contact"     => data['contact'],
-      "resources"   => data['resources'],
-      "markup"      => 'rdoc'
-    }
-  end
-
-  #
-  #def generate_metadata_from_pom(table)
-  #  project = POM::Project.new
-  #  table['(metadata)'] = {
-  #    "!"           => "metadata",
-  #    "name"        => project.name,
-  #    "version"     => project.version,
-  #    "title"       => project.title,
-  #    "summary"     => project.metadata.summary,
-  #    "description" => project.metadata.description,
-  #    "contact"     => project.metadata.contact,
-  #    "homepage"    => project.metadata.resources.home
-  #  }
-  #end
-
-  #
-  GEMSPEC_GLOB = '{.gemspec,*.gemspec}'
-
-  # Metadata follows the .ruby specification.
-  def generate_metadata_from_gemspec(table)
-    file = Dir[path_base + GEMSPEC_GLOB].first
-    spec = RubyGems::Specification.new(file)  #?
-    table['(metadata)'] = {
-      "!"           => "metadata",
-      "key"         => "(metadata)",
-      "name"        => spec.name,
-      "title"       => spec.name.upcase,
-      "version"     => spec.version.to_s,
-      "summary"     => spec.summary,
-      "description" => spec.description,
-      "contact"     => spec.email,
-      "resources"   => { "homepage" => spec.homepage },
-      "markup"      => 'rdoc'
-    }
-  end
-
-  # Add constants to table.
-  def generate_constants(table)
-    debug_msg "Generating constant documentation:"
-    classes.each do |base|
-      base.constants.each do |c|
-        full_name = "#{base.full_name}::#{c.name}"
-        #debug_msg "%s" % [full_name]
-        table[full_name] = Shomen::Model::Constant.new(
-          "key"       => full_name,
-          "name"      => c.name,
-          "namespace" => "#{base.full_name}",
-          "comment"   => c.comment, # description
-          "value"     => c.value
-        ).to_h
-      end
-    end
-    return table     
-  end
-
-  # Add classes to table.
-  def generate_classes(table)
-    debug_msg "Generating class documentation:"
-    classes.each do |c|
-      debug_msg "%s (%s)" % [ c.full_name, c.path ]
-      #outfile    = self.path_output + klass.path
-      #rel_prefix = self.path_output.relative_path_from(outfile.dirname)
-      #debug_msg "rendering #{path_output_relative(outfile)}"
-      #self.render_template(templatefile, outfile, :klass=>klass, :rel_prefix=>rel_prefix)
-
-      # HACK: No idea why RDoc is returning some weird superclass:
-      #   <RDoc::NormalClass:0xd924d4 class Object < BasicObject includes: []
-      #     attributes: [] methods: [#<RDoc::AnyMethod:0xd92b8c Object#fileutils
-      #     (public)>] aliases: []>
-      # Maybe it has something to do with #fileutils?
-      if c.type == 'class'
-        superclass = (String === c.superclass ? c.superclass.to_s : c.superclass.name)
-      else
-        superclass = nil
-      end
-      model_class = (c.type=='class' ? Shomen::Model::Class : Shomen::Model::Module)
-      model = model_class.new(
-        "key"        => c.full_name,
-        "name"       => c.name,
-        "namespace"  => c.full_name.split('::')[0...-1].join('::'),
-        "includes"   => c.includes.map{ |x| x.name },
-        #"extended"  => []  # TODO: how?
-        "comment"    => c.comment,
-        "constants"  => c.constants.map{ |x| complete_name(x.name, c.full_name) },
-        "modules"    => c.modules.map{ |x| complete_name(x.name, c.full_name) },
-        "classes"    => c.classes.map{ |x| complete_name(x.name, c.full_name) },
-        "functions"  => collect_methods(c, true),
-        "methods"    => collect_methods(c, false),
-        "attributes" => collect_attributes(c, false),
-        "class_attributes" => collect_attributes(c, true),
-        "files"      => c.in_files.map{ |x| x.full_name }
-      )
-      if c.type == 'class'
-        model["superclass"] = superclass || 'Object'
-      end
-      table[c.full_name]  = model.to_h
-    end
-    return table
-  end
-
-  # Returns String of fully qualified name.
-  def complete_name(name, namespace)
-    if name !~ /^#{namespace}/
-      "#{namespace}::#{name}"
-    else
-      name
-    end
-  end
-
-  #
-  def generate_attributes(table)
-    debug_msg "Generating attributes documentation:"
-    attributes_all.each do |m|
-      debug_msg "%s" % [m.full_name]
-
-      code       = m.source_code_raw
-      file, line = m.source_code_location
-
-      full_name = method_name(m)
-
-      #'prettyname'   => m.pretty_name,
-      #'type'         => m.type, # class or instance
-
-      #model_class = m.singleton ? Shomen::Model::Function : Shomen::Model::Method
-      model_class = Shomen::Model::Attribute
-
-      table[full_name] = model_class.new(
-        'key'          => full_name,
-        'name'         => m.name,
-        'namespace'    => m.parent_name,
-        'comment'      => m.comment,
-        'access'       => m.visibility.to_s,
-        'rw'           => m.rw,  # TODO: better name ?
-        'singleton'    => m.singleton,
-        'aliases'      => m.aliases.map{ |a| method_name(a) },
-        'alias_for'    => method_name(m.is_alias_for),
-        'image'        => m.params,
-        'arguments'    => [],
-        'parameters'   => [],
-        'block'        => m.block_params, # TODO: what is block?
-        'interface'    => m.arglists,
-        'returns'      => [],
-        'file'         => file,
-        'line'         => line,
-        'source'       => code
-      ).to_h
-    end
-    return table
-  end
-
-  #
-  def generate_methods(table)
-    debug_msg "Generating method documentation:"
-    methods_all.each do |m|
-      debug_msg "%s" % [m.full_name]
-
-      code       = m.source_code_raw
-      file, line = m.source_code_location
-
-      full_name  = method_name(m)
-
-      #'prettyname'   => m.pretty_name,
-      #'type'         => m.type, # class or instance
-
-      #model_class = m.singleton ? Shomen::Model::Function : Shomen::Model::Method
-      model_class = Shomen::Model::Method
-
-      table[full_name] = model_class.new(
-        'key'          => full_name,
-        'name'         => m.name,
-        'namespace'    => m.parent_name,
-        'comment'      => m.comment,
-        'access'       => m.visibility.to_s,
-        'singleton'    => m.singleton,
-        'aliases'      => m.aliases.map{ |a| method_name(a) },
-        'alias_for'    => method_name(m.is_alias_for),
-        'image'        => m.params,
-        'arguments'    => [],
-        'parameters'   => [],
-        'block'        => m.block_params, # TODO: what is block?
-        'interface'    => m.arglists,
-        'returns'      => [],
-        'file'         => file,
-        'line'         => line,
-        'source'       => code
-      ).to_h
-    end
-    return table
-  end
-
-  # Generate a documentation file for each file.
-  #--
-  # TODO: Add loadpath and make file path relative to it?
-  #++
-  def generate_scripts(table)
-    debug_msg "Generating file documentation in #{path_output_relative}:"
-    #templatefile = self.path_template + 'file.rhtml'
-
-    files.each do |file|
-      debug_msg "%s" % [file.full_name]
-
-      abspath = File.join(path_base, file.full_name)
-
-      #rel_prefix  = self.path_output.relative_path_from(outfile.dirname)
-      #context     = binding()
-      #debug_msg "rendering #{path_output_relative(outfile)}"
-
-      modules = table.select { |k, h|
-        h['!'] == 'module' && h['files'].include?(file.full_name)
-      }.map{ |k, h| k }
-
-      classes = table.select { |k, h|
-        h['!'] == 'class' && h['files'].include?(file.full_name)
-      }.map{ |k, h| k }
-
-      functions = table.select { |k, h|
-        h['!'] == 'function' && h['file'] == file.full_name
-      }.map{ |k, h| k }
-
-      methods = table.select { |k, h|
-        h['!'] == 'method' && h['file'] == file.full_name
-      }.map{ |k, h| k }
-
-      table[file.full_name] = Shomen::Model::Script.new(
-        "key"        => file.full_name,
-        "name"       => File.basename(file.full_name),
-        "parent"     => File.dirname(file.full_name),
-        "path"       => file.full_name,
-        "mtime"      => File.mtime(abspath),
-        "header"     => "", # TODO
-        "footer"     => "", # TODO
-        "requires"   => file.requires.map{ |r| r.name },
-        "constants"  => file.constants.map{ |c| c.full_name },
-        "modules"    => modules,   #file.modules.map{ |x| x.name },
-        "classes"    => classes,   #file.classes.map{ |x| x.name },
-        "functions"  => functions, #collect_methods(file, true),
-        "methods"    => methods,    #collect_methods(file, false)
-        "source"     => File.read(abspath)
-      ).to_h
-
-      #self.render_template(templatefile, outfile, :file=>file, :rel_prefix=>rel_prefix)
-    end
-    return table
-  end
-
-  # Generate entries for whole information files, e.g. README files.
-  def generate_files(table)
-    files_toplevel.each do |file|
-      abspath = File.join(path_base, file.full_name)
-      table[file.full_name] = Shomen::Model::Document.new(
-        "key"    => file.full_name,
-        "name"   => File.basename(file.full_name),
-        "parent" => File.dirname(file.full_name),
-        "path"   => file.full_name,
-        "mtime"  => File.mtime(abspath),
-        "text"   => File.read(abspath) #file.comment
-      ).to_h
-    end
-  end
-
-  #
-  def collect_methods(class_module, singleton=false)
-    list = []
-    class_module.method_list.each do |m|
-      next if singleton ^ m.singleton
-      list << method_name(m)
-    end
-    list.uniq
-  end
-
-  def collect_attributes(class_module, singleton=false)
-    list = []
-    class_module.attributes.each do |a|
-      next if singleton ^ a.singleton
-      #p a.rw
-      #case a.rw
-      #when :write, 'W'
-      #  list << "#{method_name(a)}="
-      #else
-        list << method_name(a)
-      #end
-    end
-    list.uniq
-  end
-
-  #
-  def method_name(method)
-    return nil if method.nil?
-    if method.singleton
-      i = method.full_name.rindex('::')     
-      method.full_name[0...i] + '.' + method.full_name[i+2..-1]
-    else
-      method.full_name
-    end
-  end
-
-  # Output progress information if rdoc debugging is enabled
-
-  def debug_msg(msg)
-    return unless $DEBUG_RDOC
-    case msg[-1,1]
-      when '.' then tab = "= "
-      when ':' then tab = "== "
-      else          tab = "* "
-    end
-    $stderr.puts(tab + msg)
-  end
-
-end
-
-# DEPRECATE ASAP
-require "rdoc/parser/c"
-# New RDoc somehow misses class comemnts.
-# copyied this function from "2.2.2" 
-if ['2.4.2', '2.4.3'].include? RDoc::VERSION
-  class RDoc::Parser::C
-    def find_class_comment(class_name, class_meth)
-      comment = nil
-      if @content =~ %r{((?>/\*.*?\*/\s+))
-                     (static\s+)?void\s+Init_#{class_name}\s*(?:_\(\s*)?\(\s*(?:void\s*)\)}xmi then
-        comment = $1
-      elsif @content =~ %r{Document-(?:class|module):\s#{class_name}\s*?(?:<\s+[:,\w]+)?\n((?>.*?\*/))}m
-        comment = $1
-      else
-        if @content =~ /rb_define_(class|module)/m then
-          class_name = class_name.split("::").last
-          comments = []
-          @content.split(/(\/\*.*?\*\/)\s*?\n/m).each_with_index do |chunk, index|
-            comments[index] = chunk
-            if chunk =~ /rb_define_(class|module).*?"(#{class_name})"/m then
-              comment = comments[index-1]
-              break
-            end
-          end
-        end
-      end
-      class_meth.comment = mangle_comment(comment) if comment
-    end
-  end
-end
-
-
-class RDoc::TopLevel
-  #
-  def to_h
-    {
-       :path     => path,
-       :name     => base_name,
-       :fullname => full_name,
-       :rootname => absolute_name,
-       :modified => last_modified,
-       :diagram  => diagram
-    }
-  end
-
-  #
-  #def to_json
-  #  to_h.to_json
-  #end
-end
-
-
-class RDoc::ClassModule
-  #
-  def with_documentation?
-    document_self_or_methods || classes_and_modules.any?{ |c| c.with_documentation? }
-  end
-
-  #
-  def document_self_or_methods
-    document_self || method_list.any?{ |m| m.document_self }
-  end
-
-#  #
-#  def to_h
-#    {
-#      :name       => name,
-#      :fullname   => full_name,
-#      :type       => type,
-#      :path       => path,
-#      :superclass => module? ? nil : superclass
-#    }
-#  end
-#
-#  def to_json
-#    to_h.to_json
-#  end
-end
-
-
-module RDoc::SourceCodeAccess
-
-  #
-  def source_code_raw
-    return '' unless @token_stream
-    src = ""
-    @token_stream.each do |t|
-      next unless t
-      src << t.text
-    end
-    #add_line_numbers(src)
-    src
-  end
-
-  #
-  def source_code_location
-    src = source_code_raw
-    if md = /File (.*?), line (\d+)/.match(src)
-      file = md[1]
-      line = md[2]
-    else
-      file = "(unknown)"
-      line = 0
-    end
-    return file, line
-  end
-
-end
-
-
-class RDoc::AnyMethod
-  include RDoc::SourceCodeAccess
-
-#  # NOTE: dont_rename_initialize isn't used
-#  def to_h
-#    {
-#      :name         => name,
-#      :fullname     => full_name,
-#      :prettyname   => pretty_name,
-#      :path         => path,
-#      :type         => type,
-#      :visibility   => visibility,
-#      :blockparams  => block_params,
-#      :singleton    => singleton,
-#      :text         => text,
-#      :aliases      => aliases,
-#      :aliasfor     => is_alias_for,
-#      :aref         => aref,
-#      :parms        => params,
-#      :callseq      => call_seq
-#      #:paramseq     => param_seq,
-#    }
-#  end
-
-#  #
-#  def to_json
-#    to_h.to_json
-#  end
-end
-
-class RDoc::Attr
-  include RDoc::SourceCodeAccess
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=begin
-  #
-  # N O T  U S E D
-  #
-
-  # Sort based on how often the top level namespace occurs, and then on the
-  # name of the module -- this works for projects that put their stuff into
-  # a namespace, of course, but doesn't hurt if they don't.
-  def sort_salient(classes)
-    nscounts = classes.inject({}) do |counthash, klass|
-      top_level = klass.full_name.gsub( /::.*/, '' )
-      counthash[top_level] ||= 0
-      counthash[top_level] += 1
-      counthash
-    endfiles_toplevel
-    classes.sort_by{ |klass|
-      top_level = klass.full_name.gsub( /::.*/, '' )
-      [nscounts[top_level] * -1, klass.full_name]
-    }.select{ |klass|
-      klass.document_self
-    }
-  end
-
-
-  # Generate an index page
-  def generate_index_file
-    debug_msg "Generating index file in #@path_output"
-    templatefile = @path_template + 'index.rhtml'
-
-    template_src = templatefile.read
-
-    template = ERB.new(template_src, nil, '<>')
-    template.filename = templatefile.to_s
-    context = binding()
-
-    output = nil
-
-    begin
-      output = template.result(context)
-    rescue NoMethodError => err
-      raise RDoc::Error, "Error while evaluating %s: %s (at %p)" % [
-        templatefile,
-        err.message,
-        eval( "_erbout[-50,50]", context )
-      ], err.backtrace
-    end
-
-    outfile = path_base + @options.op_dir + 'index.html'
-    unless $dryrun
-      debug_msg "Outputting to %s" % [outfile.expand_path]
-      outfile.open( 'w', 0644 ) do |fh|
-        fh.print( output )
-      end
-    else
-      debug_msg "Would have output to %s" % [outfile.expand_path]
-    end
-  end
 =end
-
-=begin
-    # Load and render the erb template in the given +templatefile+ within the
-    # specified +context+ (a Binding object) and write it out to +outfile+.
-    # Both +templatefile+ and +outfile+ should be Pathname-like objects.
-
-    def render_template(templatefile, outfile, local_assigns)
-      output = erb_template.render(templatefile, local_assigns)
-
-      #output = eval_template(templatefile, context)
-
-      # TODO: delete this dirty hack when documentation for example for GeneratorMethods will not be cutted off by <script> tag
-      begin
-        if output.respond_to? :force_encoding
-          encoding = output.encoding
-          output = output.force_encoding('ASCII-8BIT').gsub('<script>', '&lt;script;&gt;').force_encoding(encoding)
-        else
-          output = output.gsub('<script>', '&lt;script&gt;')
-        end
-      rescue Exception => e
-      end
-
-      unless $dryrun
-        outfile.dirname.mkpath
-        outfile.open( 'w', 0644 ) do |file|
-          file.print( output )
-        end
-      else
-        debug_msg "would have written %d bytes to %s" %
-        [ output.length, outfile ]
-      end
-    end
-=end
-
-=begin
-    # Load and render the erb template in the given +templatefile+ within the
-    # specified +context+ (a Binding object) and return output
-    # Both +templatefile+ and +outfile+ should be Pathname-like objects.
-
-    def eval_template(templatefile, context)
-      template_src = templatefile.read
-      template = ERB.new(template_src, nil, '<>')
-      template.filename = templatefile.to_s
-
-      begin
-        template.result(context)
-      rescue NoMethodError => err
-        raise RDoc::Error, "Error while evaluating %s: %s (at %p)" % [
-          templatefile.to_s,
-          err.message,
-          eval("_erbout[-50,50]", context)
-        ], err.backtrace
-      end
-    end
-=end
-
-#    #
-#
-#    def erb_template
-#      @erb_template ||= Template.new(self, provisions)
-#    end
-
-=begin
-  def render_template( templatefile, context, outfile )
-    template_src = templatefile.read
-    template = ERB.new( template_src, nil, '<>' )
-    template.filename = templatefile.to_s
-
-    output = begin
-               template.result( context )
-             rescue NoMethodError => err
-               raise RDoc::Error, "Error while evaluating %s: %s (at %p)" % [
-                 templatefile.to_s,
-                 err.message,
-                 eval( "_erbout[-50,50]", context )
-               ], err.backtrace
-             end
-
-    unless $dryrun
-      outfile.dirname.mkpath
-      outfile.open( 'w', 0644 ) do |ofh|
-        ofh.print( output )
-      end
-    else
-      debug_msg "  would have written %d bytes to %s" %
-      [ output.length, outfile ]
-    end
-  end
-=end
-

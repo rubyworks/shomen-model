@@ -1,10 +1,10 @@
 module Shomen
 
+  begin; gem 'json'; rescue; end
+
   require 'shomen/cli/abstract'
   require 'tmpdir'
-
-  begin; gem 'json'; rescue; end
-  require 'json'; 
+  require 'json'
 
   module CLI
 
@@ -32,7 +32,7 @@ module Shomen
         defaults[:format]  = :json
         defaults[:force]   = false
 
-        options = parse(argv, :yaml, :json, :force, :visibility, defaults)
+        options = parse(argv, :format, :force, :visibility, defaults)
 
         if !options[:force] && !root?
           $stderr.puts "Not a project directory. Use --force to override."
@@ -50,14 +50,14 @@ module Shomen
           files = argv
         end
 
-        visibility = options[:visibility].to_s
-        main       = Dir.glob('README*').first
         tmpdir     = File.join(Dir.tmpdir, 'shomen-rdoc')
+        main       = options[:main] || Dir.glob('{README.*,README}').first
+        visibility = options[:visibility].to_s
 
         # TODO: Any way to supress the cretion of the time stamp altogether?
         # Options#update_output_dir for instance?
 
-        # FIXME: Using the ::RDoc::Options doesn't seem to work.
+        # TODO: Using the ::RDoc::Options doesn't seem to work.
         # It complains about a template being nil in `rdoc/options.rb:760`.
 
         #rdoc_options = ::RDoc::Options.new
@@ -73,14 +73,15 @@ module Shomen
         #rdoc_options += ['-t', title]
         rdoc_options += ['-f', 'shomen']
         rdoc_options += ['-m', main] if main
+        rdoc_options += ['-V', visibility]
         rdoc_options += ['-o', tmpdir]  # '/dev/null'
-        rdoc_options += ['-V', visibility]  # '/dev/null'
         rdoc_options += files
 
-        rdoc = RDoc::RDoc.new
+        rdoc = ::RDoc::RDoc.new
         rdoc.document(rdoc_options)
 
-        if options[:format] == :yaml
+        case options[:format]
+        when :yaml
           $stdout.puts(rdoc.generator.shomen.to_yaml)
         else
           $stdout.puts(JSON.generate(rdoc.generator.shomen))
@@ -105,12 +106,20 @@ module Shomen
       #end
 
       #
-      #def option_clear(parser, options)
-      #  parser.on('-c', '--clear') do
-      #    options[:clear] = true
-      #  end
-      #end
+      def option_format(parser, options)
+        parser.on('-f', '--format NAME') do |format|
+          options[:format] = format.to_sym
+        end
+      end
 
+      #
+      def option_main(parser, options)
+        parser.on('-m', '--main FILE') do |file|
+          options[:main] = file
+        end
+      end
+
+      # TODO: Add support for additional options supported by rdoc.
     end
 
   end

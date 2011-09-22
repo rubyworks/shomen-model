@@ -3,6 +3,7 @@ module Shomen
   module Model
 
     require 'shomen/model/abstract'
+    require 'shomen/model/signature'
 
     #
     class Method < Abstract
@@ -10,7 +11,6 @@ module Shomen
       #
       def initialize(settings={})
         super(settings)
-        self['!'] = settings['singleton'] ? 'function' : 'method'
       end
 
       # Method's name.
@@ -22,11 +22,17 @@ module Shomen
       # Comment accompanying method definition.
       attr_accessor :comment
 
+      # Format of comment (rdoc, markdown or plain).
+      attr_accessor :format
+
       # Visibility: 'public', 'protected' or 'private'.
       attr_accessor :access
 
       # Singleton method?
       attr_accessor :singleton
+
+      # Can be nil, 'r', 'w', 'rw'.
+      attr_accessor :accessor
 
       # Aliases.
       attr_accessor :aliases
@@ -34,23 +40,29 @@ module Shomen
       # Aliases.
       attr_accessor :alias_for
 
-      # Interface literal image.
-      attr_accessor :image #
+      # Interfaces images and argument breakdowns.
+      attr_accessor :signatures
 
-      # Arguments breakdown.
-      attr_accessor :arguments
-
-      # Parameters breakdown.
-      attr_accessor :parameters
-
-      # Block
-      attr_accessor :block
-
-      # Interface
-      attr_accessor :interface
+      #
+      def signatures=(array)
+        self['signatures'] = (
+          array.map do |settings|
+            case settings
+            when Signature
+              settings
+            else
+              Signature.new(settings)
+            end
+          end
+        )
+      end
 
       # Returns
       attr_accessor :returns
+
+      # Method generated dynamically?
+      attr_accessor :dynamic
+
 
       # Filename.
       attr_accessor :file
@@ -61,9 +73,20 @@ module Shomen
       # Source code.
       attr_accessor :source
 
+      # Source code language.
+      attr_accessor :language
+
+
       # Deprecated method.
       alias :parent :namespace
 
+      #
+      def to_h
+        h = super
+        h['!'] = singleton ? 'class-method' : 'method'
+        h['signatures'] = (signatures || []).map{ |s| s.to_h }
+        h
+      end
     end
 
   end

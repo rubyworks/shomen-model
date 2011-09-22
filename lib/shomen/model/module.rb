@@ -6,27 +6,30 @@ module Shomen
 
     #
     class Module < Abstract
+
       #
       def self.type; 'module'; end
-
-      # Full name.
-      attr_accessor :key
 
       # Method's name.
       attr_accessor :name
 
-      #
+      # Namespace of module is the path of the class or module
+      # containing this module.
       attr_accessor :namespace
 
-      #
+      # Comment associated with module.
       attr_accessor :comment
 
-      #
+      # Format of comment (rdoc, markdown or plain).
+      attr_accessor :format
+
+      # Mixins.
       attr_accessor :includes
 
-      #attr_accessor :extended  # TODO: how?
+      # Metaclass mixins.
+      attr_accessor :extensions
 
-      #
+      # Constants defined within this module.
       attr_accessor :constants
 
       #
@@ -35,22 +38,23 @@ module Shomen
       #
       attr_accessor :classes
 
-      #
-      attr_accessor :functions
-
-      # Also known as `properties`.
-      attr_accessor :attributes
-
-      attr_accessor :class_attributes
-
-      #
+      # List of instance methods defined in the module.
       attr_accessor :methods
 
+      # List of singleton methods defined on the module.
+      attr_accessor :class_methods
+
       #
+      attr_accessor :accessors
+
+      #
+      attr_accessor :class_accessors
+
+      # The files in which the module is defined.
       attr_accessor :files
 
       #
-      alias :fullname :key
+      alias :fullname :path
     end
 
   end
