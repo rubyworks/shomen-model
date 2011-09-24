@@ -1,7 +1,7 @@
 = Shomen Documentation Specification
 
-{http://rubyworks.github.com/shomen}[Website]
-{http://github.com/rubyworks/shomen/wiki}[User Manual]
+{Website}[http://rubyworks.github.com/shomen]
+{User Manual}[http://github.com/rubyworks/shomen/wiki]
 
 
 == Description
