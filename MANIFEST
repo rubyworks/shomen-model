@@ -1,4 +1,4 @@
-#!mast .ruby .yardopts bin lib qed spec test [A-Z]*.*
+#!mast .ruby .yardopts bin lib spec test [A-Z]*.*
 .ruby
 .yardopts
 bin/shomen
@@ -13,11 +13,10 @@ lib/shomen/model/attribute.rb
 lib/shomen/model/class.rb
 lib/shomen/model/constant.rb
 lib/shomen/model/document.rb
-lib/shomen/model/function.rb
+lib/shomen/model/interface.rb
 lib/shomen/model/method.rb
 lib/shomen/model/module.rb
 lib/shomen/model/script.rb
-lib/shomen/model/signature.rb
 lib/shomen/model.rb
 lib/shomen/rdoc/extensions.rb
 lib/shomen/rdoc.0.rb
@@ -31,7 +30,6 @@ spec/02_class.rdoc
 spec/03_module.rdoc
 spec/04_constant.rdoc
 spec/05_method.rdoc
-spec/06_class_method.rdoc
 spec/08_rdoc/01_interface_overloading.rdoc
 spec/09_yard/01_interface_overloading.rdoc
 spec/applique/shomen.rb
