@@ -32,7 +32,7 @@ module Shomen
         defaults[:format]  = :json
         defaults[:force]   = false
 
-        options = parse(argv, :format, :force, :visibility, defaults)
+        options = parse(argv, :format, :force, :visibility, :main, defaults)
 
         if !options[:force] && !root?
           $stderr.puts "Not a project directory. Use --force to override."
