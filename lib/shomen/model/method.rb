@@ -3,7 +3,7 @@ module Shomen
   module Model
 
     require 'shomen/model/abstract'
-    require 'shomen/model/signature'
+    require 'shomen/model/interface'
 
     #
     class Method < Abstract
@@ -11,6 +11,7 @@ module Shomen
       #
       def initialize(settings={})
         super(settings)
+        @table['declarations'] ||= []
       end
 
       # Method's name.
@@ -25,14 +26,20 @@ module Shomen
       # Format of comment (rdoc, markdown or plain).
       attr_accessor :format
 
-      # Visibility: 'public', 'protected' or 'private'.
-      attr_accessor :access
-
-      # Singleton method?
+      # Singleton method `true` or `false/nil`.
       attr_accessor :singleton
 
-      # Can be nil, 'r', 'w', 'rw'.
-      attr_accessor :accessor
+      # Delarations is a list of keywords that designates characteristics
+      # about a method. Common characteristics include `reader`, `writer`
+      # or `accessor` if the method is defined via an attr method; `public`
+      # `private` or `protected` given the methods visibility; and `class`
+      # or `instance` given the methods scope. Default designations are
+      # are impled if not specifically stated, such as `public` and `instance`.
+      #
+      # Using a declarations list simplifies the Shomen data format by allowing
+      # declarations to be freely defined, rather than creating a field for each
+      # possible designation possible.
+      attr_accessor :declarations
 
       # Aliases.
       attr_accessor :aliases
@@ -40,29 +47,29 @@ module Shomen
       # Aliases.
       attr_accessor :alias_for
 
-      # Interfaces images and argument breakdowns.
-      attr_accessor :signatures
+      # Breakdown of interfaces signature, arguments, parameters, block argument
+      # an return values.
+      attr_accessor :interfaces
 
       #
-      def signatures=(array)
-        self['signatures'] = (
+      def interfaces=(array)
+        self['interfaces'] = (
           array.map do |settings|
             case settings
-            when Signature
+            when Interface
               settings
             else
-              Signature.new(settings)
+              Interface.new(settings)
             end
           end
         )
       end
 
-      # Returns
+      # List of possible returns types.
       attr_accessor :returns
 
       # Method generated dynamically?
       attr_accessor :dynamic
-
 
       # Filename.
       attr_accessor :file
@@ -83,8 +90,8 @@ module Shomen
       #
       def to_h
         h = super
-        h['!'] = singleton ? 'class-method' : 'method'
-        h['signatures'] = (signatures || []).map{ |s| s.to_h }
+        h['!'] = 'method'
+        h['interfaces'] = (interfaces || []).map{ |s| s.to_h }
         h
       end
     end

@@ -5,22 +5,17 @@ email:
   subject : ~
   mailto  : 
     - ruby-talk@ruby-lang.org
-    - proutils@googlegroups.com
+    - rubyworks-mailinglist@googlegroups.com
   active  : true
 
-gemcutter:
-  service: GemCutter
-  active: true
-
-box:
-  service: Box
-  types  : [gem]
+gem:
+  service: gem
   active : true
 
 rdoc:
   service  : RDoc
   template : redfish
-  include  : [ lib, README.rdoc, LICENSE ]
+  include  : [lib, README.rdoc, LICENSE]
   main     : ~
   extra    : ~
   output   : doc
@@ -41,19 +36,15 @@ dnote:
   format   : ~
   active   : true
 
-stats:
-  service  : Stats
+locat:
   title    : ~
   loadpath : ~
   exclude  : ~
   output   : ~
-  active   : true
+  active   : false
 
 vclog:
   service  : VClog
-  format   : html   # xml, txt
-  layout   : rel    # gnu
-  typed    : false
-  output   : ~
+  output   : log/history.rdoc
   active   : false
 

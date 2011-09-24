@@ -5,7 +5,7 @@ module Shomen
     require 'shomen/model/abstract'
 
     #
-    class Signature < AbstractPrime
+    class Interface < AbstractPrime
 
       # TODO: validate that there is an interface image.
       def initialize(settings={})
@@ -24,6 +24,9 @@ module Shomen
 
       # Block
       attr_accessor :block
+
+      # Return value.
+      attr_accessor :returns
 
     end
 

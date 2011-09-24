@@ -127,11 +127,13 @@ module Shomen
       model.classes         = yard_class.children.select{ |x| x.type == :class }.map{ |x| x.path }
                               #yard_class.classes.map{ |x| complete_name(x.name, c.full_name) }
 
-      model.methods         = meths.select{ |m| m.scope == :instance }.map{ |m| m.path }
-      model.class_methods   = meths.select{ |m| m.scope == :class }.map{ |m| m.path }
+      model.methods         = meths.select.map{ |m| m.path }
+      #model.methods         = meths.select{ |m| m.scope == :instance }.map{ |m| m.path }
+      #model.class_methods   = meths.select{ |m| m.scope == :class }.map{ |m| m.path }
 
-      model.accessors       = yard_class.attributes[:instance].map{ |k, rw| yard_class.path + '#' + k.to_s }
-      model.class_accessors = yard_class.attributes[:class].map{ |k, rw| yard_class.path + '.' + k.to_s }
+      model.accessors       = yard_class.attributes[:class].map{ |k, rw| yard_class.path + '.' + k.to_s } +
+                              yard_class.attributes[:instance].map{ |k, rw| yard_class.path + '#' + k.to_s }
+      #model.class_accessors = yard_class.attributes[:class].map{ |k, rw| yard_class.path + '.' + k.to_s }
 
       model.files           = yard_class.files.map{ |f, l| "/#{f}" } # :#{l}" }
 
@@ -190,78 +192,42 @@ module Shomen
       model.namespace   = yard_method.parent.path  
       model.comment     = yard_method.docstring.to_s
       model.format      = 'rdoc'  # TODO: how to determine? rdoc, markdown or plain 
+      model.aliases     = yard_method.aliases.map{ |a| a.path }  #method_name(a) }
+      # TODO: how to get alias_for from YARD?
+      #model.alias_for = method_name(yard_method.alias_for)
       model.singleton   = (yard_method.scope == :class)
 
-      # FIXME: How to get accessor? nil, 'r', 'w' or 'rw'?
-      model.accessor    = yard_method.attr_info
+      model.declarations << yard_method.scope.to_s
+      model.declarations << yard_method.visibility.to_s
+      # FIXME
+      #model.declarations << yard_method.attr_info
 
-      model.access      = yard_method.visibility.to_s
-      model.aliases     = yard_method.aliases.map{ |a| a.path }  #method_name(a) }
-
-      # TODO: can it be done?
-      #def alias_for
-      #  method_name(m.is_alias_for),
-      #end
-
-#      args,blk = [],nil
-#      yard_method.parameters.each do |n,v|
-#        case n
-#        when /^\&/
-#          blk = {'name'=>n}
-#        else
-#          args << (v ? {'name'=>n,'default'=>v} : {'name'=>n})
-#        end
-#      end
-
-      #sig = yard_method.signature
-      #sig = sig.sub(/^def\s*/, '')
-      #sig = sig.sub(/^self\./, '')
-      #sig = sig.sub('( )','()')
-
-#      # TODO: call sequences
-#      model.signatures = [{
-#        'signature'  => sig,
-#        'arguments'  => args,
-#        'parameters' => [],   #m.params,
-#        'block'      => blk
-#      }]
-
-      model.signatures = []
-      model.signatures << parse_interface(yard_method)
+      model.interfaces = []
       yard_method.tags.each do |tag|
         case tag
         when ::YARD::Tags::OverloadTag
-          model.signatures << parse_interface(tag)
+          model.interfaces << parse_interface(tag)
         end
       end
+      model.interfaces << parse_interface(yard_method)
 
-      # TODO: Does #returns belong in #signatures?
       model.returns = (
         rtns = []
         yard_method.tags(:return).each do |tag|
           tag.types.each do |t|
-            rtns << {'type' => t, 'comment' => tag.text}
+            rtns << {'type'=>t, 'comment'=>tag.text}
           end
         end
         rtns
       )
 
-      model.file     = yard_method.file
+      model.file     = '/'+yard_method.file
       model.line     = yard_method.line.to_i
       model.source   = yard_method.source
       model.language = yard_method.source_type.to_s
       model.dynamic  = yard_method.dynamic
 
       model.tags     = translate_tags(yard_method)
-
-      #args = []
-      #object.parameters.each do |var, val|
-      #  if val
-      #    args << { 'name' => var, 'default'=>val }
-      #  else
-      #    args << { 'name' => var }
-      #  end
-      #end
 
       @table[model.path] = model.to_h
     end
@@ -486,7 +452,7 @@ end
       #  'singleton'    => object.scope == :class,
       #  'aliases'      => object.aliases.map{ |a| a.path }, #method_name(a) },
       #  #'alias_for'    => method_name(m.is_alias_for),
-      #  'signatures'   => [{'interface'  => object.signature.sub('def ', ''), #m.params,
+      #  'interfaces'   => [{'interface'  => object.signature.sub('def ', ''), #m.params,
       #                      'arguments'  => args,
       #                      'parameters' => []
       #                      #'block'     => m.block_params, # TODO: what is block?

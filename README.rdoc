@@ -253,7 +253,7 @@ found within it's context.
 Used by scripts, modules and classes, provides a list of instance methods
 found within it's context.
 
-=== functions
+=== class_methods
 
 Used by scripts, modules and classes, provides a list of class-singleton
 methods found within it's context.
@@ -263,16 +263,11 @@ methods found within it's context.
 The +method+ and +function+ types have +access+ types which can either be
 +public+, +protected+ or +private+.
 
-=== image
+=== signitures
 
-The +image+ is the literal interface of a method or function's
-argument interface, e.g.
-
-  'x(*args)'
-
-=== interface
-
-The +interface+ field provides a list of _intendend_ interfaces for a
+The +signitures+ is a list of a methods documented argument interfaces.
+The first entry MUST be thew literal interface as defined in source code.
+The remaing entries, if any, are a list of _intendend_ interfaces for a
 method or function, as a subset of the literal interface.
 
 For example:
@@ -283,10 +278,34 @@ For example:
     ...
   end
 
-Might document the interface as:
+Might document the interface as `x(name, opts={})` in addition to the 
+literal `x(*args)`.
 
-  'interface': [
-    'x(name, opts={})'
+Signature entries themselves are a mapping of `image`, `arguments`, `parameters`
+and `block` entires:
+
+  [ 
+    {
+      'image': 'x(*args)',
+      'arguments': [
+        {
+          'name': 'args'
+        }
+      ]
+    },
+    {
+      'image': 'x(name, opts={})',
+      'arguments': [
+        { 
+          'name': 'args',
+          'comment': 'name of x'
+        },
+        { 
+          'name': 'opts',
+          'comment': 'runtime options for x'
+        }
+      ]
+    }
   ]
 
 

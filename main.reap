@@ -1,1 +1,23 @@
+#!/usr/bin/env ruby
 
+trip 'test' do
+  spec_run('rdoc')
+  spec_run('yard')
+end
+
+trip 'test-rdoc' do
+  spec_run('rdoc')
+end
+
+trip 'test-yard' do
+  spec_run('yard')
+end
+
+def spec_run(parser='rdoc')
+  case parser
+  when 'rdoc'
+    system "parser=#{parser} qed -Ilib spec/*.rdoc spec/08_rdoc/*.rdoc"
+  when 'yard'
+    system "parser=#{parser} qed -Ilib spec/*.rdoc spec/09_yard/*.rdoc"
+  end
+end

@@ -5,16 +5,18 @@ authors: Thomas Sawyer <transfire@gmail.com>
 created: 2010-07-01
 
 description:
-  Shomen defines a standardized documentaiton format for Ruby
-  programs which is used by other systems as a common source
-  for rendering.
+  Shomen defines a standard API documentaiton format for object-oriented
+  software (Ruby programs in particular) which can be used by documentation
+  interfaces, e.g. Hypervisor, to render API documentation
 
 requires:
   - rdoc 3~
-  - syckle (build)
+  - detroit (build)
 
 resources:
-  home: http://proutils.github.com/shomen
-  work: http://github.com/proutils/shomen
-  repo: git://github.com/proutils/shomen.git
+  home: http://rubyworks.github.com/shomen
+  work: http://github.com/rubyworks/shomen
+
+repositories:
+  upstream: git://github.com/rubyworks/shomen.git
 

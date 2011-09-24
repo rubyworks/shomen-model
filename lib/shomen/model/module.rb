@@ -41,14 +41,8 @@ module Shomen
       # List of instance methods defined in the module.
       attr_accessor :methods
 
-      # List of singleton methods defined on the module.
-      attr_accessor :class_methods
-
-      #
+      # List of attributes.
       attr_accessor :accessors
-
-      #
-      attr_accessor :class_accessors
 
       # The files in which the module is defined.
       attr_accessor :files

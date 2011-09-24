@@ -62,7 +62,9 @@ class RDoc::Generator::Shomen
 
   #
   def files
-    @files ||= RDoc::TopLevel.files
+    @files ||= (
+      @files_rdoc.select{ |f| f.parser != RDoc::Parser::Simple }
+    )
   end
 
   # List of toplevel files. RDoc supplies this via the #generate method.
@@ -125,7 +127,9 @@ class RDoc::Generator::Shomen
     generate_documents
     generate_scripts   # must be last b/c it depends on the others
 
-    # TODO: Internal referencing model, YAML and JSYNC ?
+    # TODO: method accessor fields need to be handled
+
+    # THINK: Internal referencing model, YAML and JSYNC ?
     #ref_table = reference_table(@table)
 
   #rescue StandardError => err
@@ -142,6 +146,8 @@ protected
     #@options.diagram = false  # why?
 
     @path_base   = Pathname.pwd.expand_path
+
+    # TODO: This is probably not needed any more.
     @path_output = Pathname.new(@options.op_dir).expand_path(@path_base)
   end
 
@@ -207,10 +213,8 @@ protected
       model.constants        = rdoc_class.constants.map{ |x| complete_name(x.name, rdoc_class.full_name) }
       model.modules          = rdoc_class.modules.map{ |x| complete_name(x.name, rdoc_class.full_name) }
       model.classes          = rdoc_class.classes.map{ |x| complete_name(x.name, rdoc_class.full_name) }
-      model.methods          = collect_methods(rdoc_class, false)
-      model.class_methods    = collect_methods(rdoc_class, true)
-      #model.attributes       = collect_attributes(rdoc_class, false)
-      #model.class_attributes = collect_attributes(rdoc_class, true)
+      model.methods          = rdoc_class.method_list.map{ |m| method_name(m) }.uniq
+      model.accessors        = rdoc_class.attributes.map{ |a| method_name(a) }.uniq  #+ ":#{a.rw}" }.uniq
       model.files            = rdoc_class.in_files.map{ |x| "/#{x.full_name}" }
 
       if rdoc_class.type == 'class'
@@ -238,7 +242,9 @@ protected
   def generate_methods
     debug_msg "Generating method documentation:"
 
-    methods_all.each do |rdoc_method|
+    list = methods_all + attributes_all
+
+    list.each do |rdoc_method|
       #debug_msg "%s" % [rdoc_method.full_name]
 
       #full_name  = method_name(m)
@@ -252,24 +258,31 @@ protected
       model.namespace   = rdoc_method.parent_name
       model.comment     = rdoc_method.comment
       model.format      = 'rdoc'
-      model.access      = rdoc_method.visibility.to_s
-      model.singleton   = rdoc_method.singleton
       model.aliases     = rdoc_method.aliases.map{ |a| method_name(a) }
       model.alias_for   = method_name(rdoc_method.is_alias_for)
+      model.singleton   = rdoc_method.singleton
 
-      model.signatures  = []
-      model.signatures << parse_interface(rdoc_method.name + rdoc_method.params)
+      model.declarations << rdoc_method.type.to_s #singleton ? 'class' : 'instance'
+      model.declarations << rdoc_method.visibility.to_s
+
+      model.interfaces = []
       if rdoc_method.call_seq
         rdoc_method.call_seq.split("\n").each do |cs|
-          model.signatures << parse_interface(cs)
+          model.interfaces << parse_interface(cs)
         end
       end
+      model.interfaces << parse_interface("#{rdoc_method.name}#{rdoc_method.params}")
 
       model.returns    = []  # RDoc doesn't support specifying return values
-      model.file       = rdoc_method.source_code_location.first
+      model.file       = '/'+rdoc_method.source_code_location.first
       model.line       = rdoc_method.source_code_location.last.to_i
       model.source     = rdoc_method.source_code_raw
-      model.language   = rdoc_method.c_function ? 'c' : 'ruby'
+
+      if rdoc_method.respond_to?(:c_function)
+        model.language = rdoc_method.c_function ? 'c' : 'ruby'
+      else
+        model.language = 'ruby'
+      end
 
       @table[model.path] = model.to_h
     end
@@ -375,11 +388,28 @@ protected
   end
 =end
 
+  # Generate entries for information files, e.g. `README.rdoc`.
+  def generate_documents
+    files_toplevel.each do |rdoc_document|
+      absolute_path = File.join(path_base, rdoc_document.full_name)
+
+      model = Shomen::Model::Document.new
+
+      model.path   = rdoc_document.full_name
+      model.name   = File.basename(absolute_path)
+      model.mtime  = File.mtime(absolute_path)
+      model.text   = File.read(absolute_path) #file.comment
+      model.format = mime_type(absolute_path)
+
+      @table['/'+model.path] = model.to_h
+    end
+  end
+
   # TODO: Add loadpath and make file path relative to it?
 
   # Generate script entries.
   def generate_scripts
-    debug_msg "Generating file documentation in #{path_output_relative}:"
+    #debug_msg "Generating file documentation in #{path_output_relative}:"
     #templatefile = self.path_template + 'file.rhtml'
 
     files.each do |rdoc_file|
@@ -422,24 +452,6 @@ protected
       @table['/'+model.path] = model.to_h
     end
   end
-
-  # Generate entries for information files, e.g. `README.rdoc`.
-  def generate_documents
-    files_toplevel.each do |rdoc_document|
-      absolute_path = File.join(path_base, rdoc_document.full_name)
-
-      model = Shomen::Model::Document.new
-
-      model.path   = rdoc_document.full_name
-      model.name   = File.basename(absolute_path)
-      model.mtime  = File.mtime(absolute_path)
-      model.text   = File.read(absolute_path) #file.comment
-      model.format = mime_type(absolute_path)
-
-      @table['/'+model.path] = model.to_h
-    end
-  end
-
 
   # Returns String of fully qualified name.
   def complete_name(name, namespace)
