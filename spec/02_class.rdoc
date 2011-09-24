@@ -60,6 +60,4 @@ missing (i.e. `nil`) or empty collections.
   @shomen['ExampleClass']['modules'].to_a        #=> []
   @shomen['ExampleClass']['classes'].to_a        #=> []
   @shomen['ExampleClass']['methods'].to_a        #=> []
-  @shomen['ExampleClass']['class-methods'].to_a  #=> []
-
 

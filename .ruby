@@ -8,16 +8,18 @@ conflicts: []
 requirements:
 - name: rdoc
   version: 3~
-- name: syckle
+- name: detroit
   groups:
   - build
   development: true
 dependencies: []
-repositories: []
+repositories:
+- uri: git://github.com/rubyworks/shomen.git
+  scm: git
+  name: upstream
 resources:
-  home: http://proutils.github.com/shomen
-  work: http://github.com/proutils/shomen
-  repo: git://github.com/proutils/shomen.git
+  home: http://rubyworks.github.com/shomen
+  work: http://github.com/rubyworks/shomen
 load_path:
 - lib
 extra:
@@ -28,8 +30,9 @@ revision: 0
 title: Shomen
 summary: Standardized Object-Oriented Documentation Format
 created: '2010-07-01'
-description: Shomen defines a standardized documentaiton format for Ruby programs
-  which is used by other systems as a common source for rendering.
+description: Shomen defines a standard API documentaiton format for object-oriented
+  software (Ruby programs in particular) which can be used by documentation interfaces,
+  e.g. Hypervisor, to render API documentation
 version: 0.1.0
 name: shomen_documentation_specification
-date: '2011-09-07'
+date: '2011-09-24'

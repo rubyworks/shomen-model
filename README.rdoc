@@ -2,9 +2,10 @@
 
 == Description
 
-Shomen is an intermediary documentation model catered to Ruby. The 
-specification is a flat mapping, without internal referencing, suitable for
-storage in both YAML and JSON formats.
+Shomen is an intermediary documentation model suitable for documenting most
+object-oriented programming languages, though designed first and foremost for
+Ruby. The specification is a flat mapping, without internal referencing, suitable
+for storage in both YAML and JSON formats.
 
 == Why?
 
@@ -75,16 +76,28 @@ thus it's index is the fixed key, "<code>(metadata)</code>".
       "title"       : "Song Program",
       "summary"     : "Program for Playing Songs",
       "description" : "Play songs the easy way using song.rb!",
-      "created"     : "!date 2010-10-10"
+      "created"     : "!date 2010-10-10",
+      "copyright"   : {
+        "holder"  : "John Doe",
+        "year"    : 2010,
+        "license" : "MIT"
+      }
   }
 
-=== File Type
+Shomen metadata conforms to the the [.ruby specification]{http://dotruby.github.com}
+for Ruby projects. 
 
-The +file+ type is used to house non-Ruby documentation documents, such as
+If using Shomen standard for other languages the metadata may vary to conform to
+that language's common project metadata format, e.g. the package file of Node.js
+projects.
+
+=== Document Type
+
+The +document+ type is used to house non-Ruby documentation documents, such as
 a README. It's structure is very basic.
 
   "/README.rdoc": {
-      "!"           : "file"
+      "!"           : "document"
       "name"        : "README.rdoc",
       "path"        : "",
       "mtime"       : "2010-10-10 11:11:10",
@@ -107,8 +120,7 @@ The +script+ type provides information about a ruby program _file_.
       "constants"   : ["MusicStore::CONFIG_DIRECTORY"],
       "modules"     : ["MusicStore", "MusicStore::MusicMixin"],
       "classes"     : ["MusicStore::Song"],
-      "functions"   : ["MusicStore.config_directory"],
-      "methods"     : ["MusicStore::MusicMixin#play", "MusicStore::MusicMixin#artist"]
+      "methods"     : ["MusicStore.config_directory", "MusicStore::MusicMixin#play", "MusicStore::MusicMixin#artist"]
   }
 
 === Module Type
@@ -125,7 +137,6 @@ The +module+ type describes a Ruby Module.
       "constants"   : ["MusicStore::CONFIG_DIRECTORY"],
       "modules"     : ["MusicStore::MusicMixin"],
       "classes"     : ["MusicStore::Song"],
-      "functions"   : [],
       "methods"     : []
   }
 
@@ -170,18 +181,19 @@ The +method+ type describes an instance method.
       "name"        : "play",
       "namespace"   : "MusicStore::Song",
       "comment"     : "Play the song.",
-      "access"      : "public"
-      "image"       : "(seconds=nil)",
-      "interface"   : [
-        'play(seconds=nil)'
-      ],
-      "arguments"   : [
+      "declarations": ["public"],
+      "interfaces"  : [
         {
-          "name"    : "seconds",
-          "comment" : "number of seconds to playback"
+          "signature"   : "play(seconds=nil)",
+          "arguments"   : [
+            {
+              "name"    : "seconds",
+              "comment" : "number of seconds to playback"
+            }
+          ]
+          "parameters"  : []
         }
-      ]
-      "parameters"  : []
+      ],
       "returns"     : [
         {
           "type"    : "Integer",
@@ -190,30 +202,29 @@ The +method+ type describes an instance method.
       ]
   }
 
-=== Function Type
 
-The +function+ type describes a class/module singleton method. The use of
-the term "function" might seem an odd one, but it actually a term Matz has
-used as a way to better conceptualize the character of class singleton
-methods.
+Methods can also be class methods.
 
-  "MusicStore::Song.config_directory": {
-      "!"           : "function",
-      "name"        : "config_directory",
-      "namespace"   : "MusicStore",
-      "comment"     : "Overridable setting for configuration directory.",
-      "access"      : "public",
-      "image"       : "",
-      "interface"   : [],
-      "arguments"   : [],
-      "parameters"  : [],
-      "returns"     : [
+    "MusicStore::Song.config_directory": {
+      "!"            : "method",
+      "name"         : "config_directory",
+      "namespace"    : "MusicStore",
+      "comment"      : "Overridable setting for configuration directory.",
+      "declarations" : ["public"],
+      "interfaces"   : [
         {
-          "type"    : "String",
-          "comment" : "configuration directory"
+          "signature"   : "config_directory()",
+          "arguments"   : [],
+          "parameters"  : []
         }
       ]
-  }
+      "returns"      : [
+        {
+          "type"     : "String",
+          "comment"  : "configuration directory"
+        }
+      ]
+    }
 
 == Fields
 
@@ -222,7 +233,7 @@ methods.
 Every entry type has a name field. This simply give the local name of
 the entry.
 
-=== namepace
+=== namespace
 
 Every entry type, with the expection of +script+, has a +namespace+.
 This gives the "nesting" of the entry within the code.
@@ -258,17 +269,27 @@ found within it's context.
 Used by scripts, modules and classes, provides a list of class-singleton
 methods found within it's context.
 
-=== access
+=== declarations
 
-The +method+ and +function+ types have +access+ types which can either be
-+public+, +protected+ or +private+.
+The +method+ type has a +declarations+ field which is a list of terms
+descriving the method. These include *visibility* values +public+,
++protected+ or +private+; *scope* values +class+ or +instance+; and
+<i>attribute type</i> +reader+, +writer+ or +accessor+ if a method is an
+attribute method. Default designations are are impled if not specifically
+stated, such as `public` and `instance`. An example of entry would be:
 
-=== signitures
+  ['private', 'class']
 
-The +signitures+ is a list of a methods documented argument interfaces.
-The first entry MUST be thew literal interface as defined in source code.
-The remaing entries, if any, are a list of _intendend_ interfaces for a
-method or function, as a subset of the literal interface.
+Using a declarations list simplifies the Shomen data format by allowing
+declarations to be freely defined, rather than creating a field for each
+possible designation possible.
+
+=== Interfaces
+
+The +interfaces+ entry is a list of a method's documented argument interface.
+The last entry should be the literal interface as defined in source code.
+The remaing entries, if any, are a list of _intended_ interfaces for a
+method as a subset of the literal interface.
 
 For example:
 
@@ -278,15 +299,15 @@ For example:
     ...
   end
 
-Might document the interface as `x(name, opts={})` in addition to the 
+We might document the interface as `x(name, opts={})` in addition to the 
 literal `x(*args)`.
 
-Signature entries themselves are a mapping of `image`, `arguments`, `parameters`
-and `block` entires:
+Interface entries themselves are a mapping of `signature`, `arguments`, `parameters`,
+`block` and `returns` mapping:
 
-  [ 
+  [
     {
-      'image': 'x(*args)',
+      'signature': 'x(*args)',
       'arguments': [
         {
           'name': 'args'
@@ -294,7 +315,7 @@ and `block` entires:
       ]
     },
     {
-      'image': 'x(name, opts={})',
+      'signature': 'x(name, opts={})',
       'arguments': [
         { 
           'name': 'args',
@@ -307,7 +328,6 @@ and `block` entires:
       ]
     }
   ]
-
 
 === arguments
 
@@ -341,7 +361,7 @@ options, the +parameters+ field can be used to descrip them.
   ]
 
 Notice that arguments and parameters do not have a direct linkage to the 
-interface they describe. While techincally, we could make +arguments+ and 
+interface they describe. While techincally we could make +arguments+ and 
 +parameters+ a subfield of the +interface+ as a mapping, available documentation
 tools do not typically provide means for describing that level of detail.
 The use of unique argument names is generally sufficient to communicate the
@@ -350,7 +370,7 @@ to make that relationship clearer.
 
 === returns
 
-The +returns+ field, used by the +method+ and +function+ type, is a sequence of
+The +returns+ field, used by +method+ type, is a sequence of
 possible return values. Ususally there is only one return value, but it is 
 possible for there to be multiple ruturn values based on conditions
 within the method. For example, a method might return a filename if a file
@@ -358,7 +378,7 @@ exists, but +nil+ otherwise, in which case the +returns+ field might look like:
 
   'returns': [
     {
-      'type': 'String'
+      'type': 'String',
       'comment': 'filename'
     },
     {
@@ -367,25 +387,33 @@ exists, but +nil+ otherwise, in which case the +returns+ field might look like:
     }
   }
 
+Signatures also allow a +returns+ field tied specifically to a particular
+interface.
 
-== Guidelines for Documentation Parsers
+=== tags
+
+A tags field can be added to any code object entry. It is a mapping of
+lable to description and is availabe as a means of custom description.
+
+
+== Guidelines for Documentation Parsers and Generators
 
 Not all documentation systems will be able to produce all the information
 that the Shomen standard supports. For instance RDoc doesn't have any means
-of demarking return values. But this is to be expected. The documentaion
-system should simply produce as much of the information as it can. Generators
+of commenting on return values. But this is to be expected. The documentaion
+system should simply produce as much of the information as it can --generators
 have the responsiblity of gracefully handling missing information.
 
+Documentation generators need to gracefully handle missing information.
+Most fields can be simply left out if no value can be provided, or
+are an empty sequence or mapping, or have a value that is the expected
+default. This can help to minimize the size the documentation file.
 
-== Guidelines for Documentation Generators
 
-As mentioned above, documentation generators need to gracefully hand missing
-information.
-
-
-== COPYING
+== Copying
 
 Copyright (c) 2010 Thomas Sawyer
 
-Shomen is distributed under the same terms as Ruby.
+Shomen is distributed under the terms of the BSD-2-Clause license.
 
+See COPYING.rdoc for license details.
