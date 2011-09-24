@@ -1,11 +1,16 @@
 = Shomen Documentation Specification
 
+{http://rubyworks.github.com/shomen}[Website]
+{http://github.com/rubyworks/shomen/wiki}[User Manual]
+
+
 == Description
 
 Shomen is an intermediary documentation model suitable for documenting most
 object-oriented programming languages, though designed first and foremost for
 Ruby. The specification is a flat mapping, without internal referencing, suitable
 for storage in both YAML and JSON formats.
+
 
 == Why?
 
@@ -14,400 +19,35 @@ themselves with a single output target. And documentation templates in turn only
 need to concern themselves with a single input format to use regardless of the
 parsing system that was used to generate it.
 
-== Design By Example
 
-We will use the following script, which would be located at 'lib/musicstore/song.rb'
-in a project, as an example to elucidate the specification.
+== Learn
 
-  # song.rb (c) 2010 John Doe
+To learn more about shomen please vist:
 
-  require 'fileutils'
+* http://rubyworks.github.com/shomen
+* http://github.com/rubyworks/shomen/wiki
 
-  # Toplevel namespace for my MusicStore application.
-  module MusicStore
 
-    # Where to store music store's configuration.
-    CONFIG_DIRECTORY = "~/.config/musicstore"
+== Usage
 
-    # Overridable setting for configuration directory.
-    def self.config_directory
-      @@config_directory ||= CONFIG_DIRECTORY
-    end
+Shomen currently supports parsing via RDoc and YARD. Specify the parser to
+use to the shomen command, e.g.
 
-    # Common methods for MusicStore classes.
-    module MusicMixin
-    end
+  $ shomen rdoc lib [A-Z]*.* -m README.rdoc > site/doc.json
 
-    # This is the Song class.
-    class Song
-      include MusicMixin
+If a `.document` file exists, of course, the file globs can be omitted.
+For yard it's basically the same deal.
 
-      # Returns a String of the artists name.
-      def artist    
-      end
+  $ shomen yard lib [A-Z]*.* -r README.rdoc > site/doc.json
 
-      # Play the song.
-      # 
-      # seconds - number of seconds to playback
-      #
-      # Returns Integer of forked process id.
-      def play(seconds=nil)
-      end
+YARD will use `.yardopts` if it is present, so you genetally do not need to
+to specify any parameters, e.g.
 
-    end
+  $ shomen yard > site/doc.json
 
-  end
+Now that you have a Shomen documentation file for you project, you simply need 
+to pair it up with a viewer. Currently that means using {HyperVisor}[http://github.com/rubyworks/hypervisor].
 
-== Types
-
-The Shomen specification is a mapping of typed entries. The keys to the
-mapping are uniqe identifiers.
-
-=== Metadata Type
-
-The +metadata+ entry provides general information about the library or
-application being documented, such as it's name, description and current
-version. There will be only one +metadata+ entry in a given Shomen file,
-thus it's index is the fixed key, "<code>(metadata)</code>".
-
-  "(metadata)": {
-      "!"           : "metadata",
-      "name"        : "song",
-      "title"       : "Song Program",
-      "summary"     : "Program for Playing Songs",
-      "description" : "Play songs the easy way using song.rb!",
-      "created"     : "!date 2010-10-10",
-      "copyright"   : {
-        "holder"  : "John Doe",
-        "year"    : 2010,
-        "license" : "MIT"
-      }
-  }
-
-Shomen metadata conforms to the the [.ruby specification]{http://dotruby.github.com}
-for Ruby projects. 
-
-If using Shomen standard for other languages the metadata may vary to conform to
-that language's common project metadata format, e.g. the package file of Node.js
-projects.
-
-=== Document Type
-
-The +document+ type is used to house non-Ruby documentation documents, such as
-a README. It's structure is very basic.
-
-  "/README.rdoc": {
-      "!"           : "document"
-      "name"        : "README.rdoc",
-      "path"        : "",
-      "mtime"       : "2010-10-10 11:11:10",
-      "text"        : "= Music Store README\n ..."
-  }
-
-=== Script Type
-
-The +script+ type provides information about a ruby program _file_.
-
-  "/musicstore/song.rb": {
-      "!"           : "script",
-      "name"        : "song.rb",
-      "path"        : "musicstore",
-      "loadpath"    : "lib",
-      "mtime"       : "2010-10-10 11:11:10",
-      "header"      : "song.rb (c) 2010 John Doe",
-      "footer"      : "",
-      "requires"    : ["fileutils"],
-      "constants"   : ["MusicStore::CONFIG_DIRECTORY"],
-      "modules"     : ["MusicStore", "MusicStore::MusicMixin"],
-      "classes"     : ["MusicStore::Song"],
-      "methods"     : ["MusicStore.config_directory", "MusicStore::MusicMixin#play", "MusicStore::MusicMixin#artist"]
-  }
-
-=== Module Type
-
-The +module+ type describes a Ruby Module.
-
-  "MusicStore": {
-      "!"           : "module",
-      "name"        : "MusicStore",
-      "namespace"   : "",
-      "includes"    : [],
-      "extensions"  : [],
-      "comment"     : "Common methods for MusicStore classes.",
-      "constants"   : ["MusicStore::CONFIG_DIRECTORY"],
-      "modules"     : ["MusicStore::MusicMixin"],
-      "classes"     : ["MusicStore::Song"],
-      "methods"     : []
-  }
-
-=== Class Type
-
-The +class+ type describes a Ruby Class.
-
-  "MusicStore::Song": {
-      "!"           : "class",
-      "name"        : "Song",
-      "namespace"   : "MusicStore",
-      "includes"    : ["MusicStore::SongMixin"],
-      "extensions"  : [],
-      "comment"     : "This is the Song class.",
-      "constants"   : [],
-      "modules"     : [],
-      "classes"     : [],
-      "functions"   : [],
-      "methods"     : ["MusicStore::Song#artist", "MusicStore::Song#play"]
-  }
-
-We left the +methods+ entry with an elipses as it would contain method-type
-entries for each of it's two methods. An example of which you can see below.
-
-=== Constant Type
-
-The +constant+ type describes a constant.
-
-  "MusicStore::CONFIG_DIRECTORY": {
-      "!"           : "constant",
-      "name"        : "CONFIG_DIRECTORY",
-      "namespace"   : "MusicStore"
-      "comment"     : "Where to store music store's configuration."
-  }
-
-=== Method Type
-
-The +method+ type describes an instance method.
-
-  "MusicStore::Song#play": {
-      "!"           : "method",
-      "name"        : "play",
-      "namespace"   : "MusicStore::Song",
-      "comment"     : "Play the song.",
-      "declarations": ["public"],
-      "interfaces"  : [
-        {
-          "signature"   : "play(seconds=nil)",
-          "arguments"   : [
-            {
-              "name"    : "seconds",
-              "comment" : "number of seconds to playback"
-            }
-          ]
-          "parameters"  : []
-        }
-      ],
-      "returns"     : [
-        {
-          "type"    : "Integer",
-          "comment" : "forked process id"
-        }
-      ]
-  }
-
-
-Methods can also be class methods.
-
-    "MusicStore::Song.config_directory": {
-      "!"            : "method",
-      "name"         : "config_directory",
-      "namespace"    : "MusicStore",
-      "comment"      : "Overridable setting for configuration directory.",
-      "declarations" : ["public"],
-      "interfaces"   : [
-        {
-          "signature"   : "config_directory()",
-          "arguments"   : [],
-          "parameters"  : []
-        }
-      ]
-      "returns"      : [
-        {
-          "type"     : "String",
-          "comment"  : "configuration directory"
-        }
-      ]
-    }
-
-== Fields
-
-=== name
-
-Every entry type has a name field. This simply give the local name of
-the entry.
-
-=== namespace
-
-Every entry type, with the expection of +script+, has a +namespace+.
-This gives the "nesting" of the entry within the code.
-
-=== comment
-
-Every entry has a +comment+ field, which store the comment given just
-before the actual code for the entry.
-
-=== constants
-
-Used by scripts, modules and classes, provides a list of constants
-found within it's context (excluding modules and classes, though they
-are technically constant references too).
-
-=== modules
-
-Used by scripts, modules and classes, provides a list of modules
-found within it's context.
-
-=== classes
-
-Used by scripts, modules and classes, provides a list of classes
-found within it's context.
-
-=== methods
-
-Used by scripts, modules and classes, provides a list of instance methods
-found within it's context.
-
-=== class_methods
-
-Used by scripts, modules and classes, provides a list of class-singleton
-methods found within it's context.
-
-=== declarations
-
-The +method+ type has a +declarations+ field which is a list of terms
-descriving the method. These include *visibility* values +public+,
-+protected+ or +private+; *scope* values +class+ or +instance+; and
-<i>attribute type</i> +reader+, +writer+ or +accessor+ if a method is an
-attribute method. Default designations are are impled if not specifically
-stated, such as `public` and `instance`. An example of entry would be:
-
-  ['private', 'class']
-
-Using a declarations list simplifies the Shomen data format by allowing
-declarations to be freely defined, rather than creating a field for each
-possible designation possible.
-
-=== Interfaces
-
-The +interfaces+ entry is a list of a method's documented argument interface.
-The last entry should be the literal interface as defined in source code.
-The remaing entries, if any, are a list of _intended_ interfaces for a
-method as a subset of the literal interface.
-
-For example:
-
-  def x(*args)
-    opts = Hash === args.last ? args.pop : {}
-    name = args.first
-    ...
-  end
-
-We might document the interface as `x(name, opts={})` in addition to the 
-literal `x(*args)`.
-
-Interface entries themselves are a mapping of `signature`, `arguments`, `parameters`,
-`block` and `returns` mapping:
-
-  [
-    {
-      'signature': 'x(*args)',
-      'arguments': [
-        {
-          'name': 'args'
-        }
-      ]
-    },
-    {
-      'signature': 'x(name, opts={})',
-      'arguments': [
-        { 
-          'name': 'args',
-          'comment': 'name of x'
-        },
-        { 
-          'name': 'opts',
-          'comment': 'runtime options for x'
-        }
-      ]
-    }
-  ]
-
-=== arguments
-
-The +arguments+ field is used by the +method+ and +function+ types to provide
-details about interface arguments.
-
-  'arguments': [
-    { 
-      'name': 'name',
-      'comment': 'name of x'
-    },
-    {
-      'name': 'opts',
-      'comment': 'runtime options for x'
-    }
-  ]
-
-=== parameters
-
-The +parametes+ field is used by the +method+ and +function+ types to provide
-details about an interface's named paraemters. For example in the above +x+
-method, +opts+ is used for named parameters. If there are specifically recognized
-options, the +parameters+ field can be used to descrip them.
-
-  'parameters': [
-    { 
-      'name': 'foo',
-      'comment': 'foo description',
-      'for': 'opts'
-    }
-  ]
-
-Notice that arguments and parameters do not have a direct linkage to the 
-interface they describe. While techincally we could make +arguments+ and 
-+parameters+ a subfield of the +interface+ as a mapping, available documentation
-tools do not typically provide means for describing that level of detail.
-The use of unique argument names is generally sufficient to communicate the
-relationship. The +parameters+ field provides the +for+ subfield as an option
-to make that relationship clearer.
-
-=== returns
-
-The +returns+ field, used by +method+ type, is a sequence of
-possible return values. Ususally there is only one return value, but it is 
-possible for there to be multiple ruturn values based on conditions
-within the method. For example, a method might return a filename if a file
-exists, but +nil+ otherwise, in which case the +returns+ field might look like:
-
-  'returns': [
-    {
-      'type': 'String',
-      'comment': 'filename'
-    },
-    {
-      'type': 'nil',
-      'comment': 'if no file is found'
-    }
-  }
-
-Signatures also allow a +returns+ field tied specifically to a particular
-interface.
-
-=== tags
-
-A tags field can be added to any code object entry. It is a mapping of
-lable to description and is availabe as a means of custom description.
-
-
-== Guidelines for Documentation Parsers and Generators
-
-Not all documentation systems will be able to produce all the information
-that the Shomen standard supports. For instance RDoc doesn't have any means
-of commenting on return values. But this is to be expected. The documentaion
-system should simply produce as much of the information as it can --generators
-have the responsiblity of gracefully handling missing information.
-
-Documentation generators need to gracefully handle missing information.
-Most fields can be simply left out if no value can be provided, or
-are an empty sequence or mapping, or have a value that is the expected
-default. This can help to minimize the size the documentation file.
 
 
 == Copying
