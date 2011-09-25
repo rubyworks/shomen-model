@@ -6,10 +6,10 @@
 
 == Description
 
-Shomen is an intermediary documentation model suitable for documenting most
-object-oriented programming languages, though designed first and foremost for
-Ruby. The specification is a flat mapping, without internal referencing, suitable
-for storage in both YAML and JSON formats.
+Shomen is an intermediary documentation model designed for documenting
+object-oriented programming languages, particularly Ruby. The specification
+is a flat mapping, without internal referencing, suitable for storage in both
+YAML and JSON formats.
 
 
 == Why?
