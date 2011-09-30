@@ -1,11 +1,8 @@
 = RELEASE HISTORY
 
-== 0.1.0 | 2010-09-27
+== 0.1.0 | 2011-09-27
 
-This is the first release of the RDoc Shomen Adapter. At this stage it
-is of course likely that a few field changes will occur before the
-the Shomen standard is finalizied, but it's is now in solid enough a
-state to begin building documentation generators and webapps against.
+This is the initial public release of Shomen.
 
 Changes:
 
