@@ -31,8 +31,9 @@ module Shomen
         defaults = {}
         defaults[:format]  = :json
         defaults[:force]   = false
+        defaults[:source]  = true
 
-        options = parse(argv, :format, :force, :visibility, :main, defaults)
+        options = parse(argv, :format, :force, :visibility, :main, :source, defaults)
 
         if !options[:force] && !root?
           $stderr.puts "Not a project directory. Use --force to override."
@@ -42,7 +43,8 @@ module Shomen
         if argv.empty?
           if File.exist?('.document')
             files = File.read('.document').split("\n")
-            files.reject!{ |f| f.strip == '' }
+            files = files.reject{ |f| f.strip == '' or f.strip =~ /^\#/ }
+            files = files.map{ |f| Dir[f] }.flatten
           else
             files = ['lib']
           end
@@ -104,13 +106,6 @@ module Shomen
       #    options[:document] = file
       #  end
       #end
-
-      #
-      def option_format(parser, options)
-        parser.on('-f', '--format NAME') do |format|
-          options[:format] = format.to_sym
-        end
-      end
 
       #
       def option_main(parser, options)

@@ -47,7 +47,7 @@ module Shomen
     #
     def gemspec
       file = Dir[File.join(PWD, '{,*}.gemspec')].first
-      return nil unless File.exist?(file)
+      return nil unless file && File.exist?(file)
       file
     end
 

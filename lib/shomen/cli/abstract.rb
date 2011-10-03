@@ -1,5 +1,11 @@
 module Shomen
 
+  begin; gem 'json'; rescue; end
+
+  require 'optparse'
+  require 'yaml'
+  require 'json'
+
   module CLI
 
     # Command line interface base class.
@@ -28,17 +34,33 @@ module Shomen
         return options
       end
 
+=begin
       #
       def option_yaml(parser, options)
         parser.on('-y', '--yaml', 'output YAML instead of JSON') do
-          options[:format] = :yaml
+          options[:format] = 'yaml'
         end
       end
 
       #
       def option_json(parser, options)
         parser.on('-j', '--json', 'output JSON instead of YAML (default)') do
-          options[:format] = :json
+          options[:format] = 'json'
+        end
+      end
+=end
+
+      #
+      def option_format(parser, options)
+        parser.on('-f', '--format NAME') do |format|
+          options[:format] = format
+        end
+      end
+
+      #
+      def option_source(parser, options)
+        parser.on('-s', '--[no-]source', 'include full source in script documentation') do |bool|
+          Shomen.source = bool
         end
       end
 
@@ -83,6 +105,16 @@ module Shomen
 
     end
 
+  end
+
+  #
+  def self.source?
+    @source
+  end
+
+  #
+  def self.source=(bool)
+    @source = bool
   end
 
 end

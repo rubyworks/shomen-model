@@ -224,10 +224,12 @@ protected
         #     (public)>] aliases: []>
         # Maybe it has something to do with #fileutils?
         model.superclass = (
-          if String === rdoc_class.superclass
-            rdoc_class.superclass.to_s 
+          case rdoc_class.superclass
+          when nil
+          when String
+            rdoc_class.superclass
           else
-            rdoc_class.superclass.name
+            rdoc_class.superclass.full_name
           end
         )
       end
@@ -268,7 +270,8 @@ protected
       model.interfaces = []
       if rdoc_method.call_seq
         rdoc_method.call_seq.split("\n").each do |cs|
-          model.interfaces << parse_interface(cs)
+          cs = cs.to_s.strip
+          model.interfaces << parse_interface(cs) unless cs == ''
         end
       end
       model.interfaces << parse_interface("#{rdoc_method.name}#{rdoc_method.params}")
@@ -288,56 +291,7 @@ protected
     end
   end
 
-=begin
-  #
-  def parse_arguments(rdoc_method)
-    args, block  = [], nil
-
-    rdoc_method.param_list.each do |a|
-      if a.start_with?('&')
-        block = {'name'=>a}
-      else
-        n,v = a.split('=')
-        args << (v ? {'name'=>n,'default'=>v} : {'name'=>n})
-      end
-    end
-
-    return args, block
-  end
-=end
-
-  #
-  # TODO: remove any trailing comment too
-  def parse_interface(interface)
-    args, block = [], {}
-
-    interface, returns = interface.split(/[=-]>/)
-    interface = interface.strip
-    if i = interface.index(/\)\s*\{/)
-      block['image'] = interface[i+1..-1].strip
-      interface      = interface[0..i].strip
-    end
-
-    arguments = interface.strip.sub(/^.*?\(/,'').chomp(')')
-    arguments = arguments.split(/\s*\,\s*/)
-    arguments.each do |a|
-      if a.start_with?('&')
-        block['name'] = a
-      else
-        n,v = a.split('=')
-        args << (v ? {'name'=>n,'default'=>v} : {'name'=>n})
-      end
-    end
-
-    result = {}
-    result['signature'] = interface
-    result['arguments'] = args
-    result['block']     = block unless block.empty?
-    result['returns']   = returns.strip if returns
-    return result
-  end
-  private :parse_interface
-
+#--
 =begin
   #
   def generate_attributes
@@ -387,6 +341,40 @@ protected
     end
   end
 =end
+#++
+
+  # Parse method interface.
+  #
+  # TODO: remove any trailing comment too
+  def parse_interface(interface)
+    args, block = [], {}
+
+    interface, returns = interface.split(/[=-]\>/)
+    interface = interface.strip
+    if i = interface.index(/\)\s*\{/)
+      block['signature'] = interface[i+1..-1].strip
+      interface = interface[0..i].strip
+    end
+
+    arguments = interface.strip.sub(/^.*?\(/,'').chomp(')')
+    arguments = arguments.split(/\s*\,\s*/)
+    arguments.each do |a|
+      if a.start_with?('&')
+        block['name'] = a
+      else
+        n,v = a.split('=')
+        args << (v ? {'name'=>n,'default'=>v} : {'name'=>n})
+      end
+    end
+
+    result = {}
+    result['signature'] = interface
+    result['arguments'] = args
+    result['block']     = block unless block.empty?
+    result['returns']   = returns.strip if returns
+    return result
+  end
+  private :parse_interface
 
   # Generate entries for information files, e.g. `README.rdoc`.
   def generate_documents
@@ -423,8 +411,12 @@ protected
       model.path      = rdoc_file.full_name
       model.name      = File.basename(rdoc_file.full_name)
       model.mtime     = File.mtime(absolute_path)
-      model.source    = File.read(absolute_path) #file.comment
-      model.language  = mime_type(absolute_path)
+
+      if Shomen.source?
+        model.source    = File.read(absolute_path) #file.comment
+        model.language  = mime_type(absolute_path)
+      end
+
       #model.header   =
       #model.footer   =
       model.requires  = rdoc_file.requires.map{ |r| r.name }
@@ -472,6 +464,7 @@ protected
     list.uniq
   end
 
+  #
   def collect_attributes(class_module, singleton=false)
     list = []
     class_module.attributes.each do |a|
@@ -525,7 +518,7 @@ end
 
 
 
-
+#--
 =begin
   #
   # N O T  U S E D
@@ -601,3 +594,5 @@ end
   end
 
 =end
+#++
+

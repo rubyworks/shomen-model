@@ -68,6 +68,9 @@ module Shomen
       # List of possible returns types.
       attr_accessor :returns
 
+      # List of possible raised errors.
+      attr_accessor :raises
+
       # Method generated dynamically?
       attr_accessor :dynamic
 
