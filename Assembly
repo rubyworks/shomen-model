@@ -15,28 +15,18 @@ gem:
   service: gem
   active : true
 
-rdoc:
-  service  : RDoc
-  template : redfish
-  include  : [lib, README.rdoc, LICENSE]
-  main     : ~
-  extra    : ~
-  output   : doc
-  active   : false
-
-ridoc:
-  service: RIDoc
+ri:
+  service: ri
   include: ~
   exclude: ~
   output : ri
   active : false
 
 dnote:
-  service  : DNote
+  service  : dnote
   files    : ~
   labels   : ~
-  output   : ~
-  format   : ~
+  output   : log/notes.rdoc
   active   : true
 
 locat:

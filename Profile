@@ -1,4 +1,5 @@
 --- 
+name: shomen
 title: Shomen
 summary: Standardized Object-Oriented Documentation Format
 authors: Thomas Sawyer <transfire@gmail.com>
@@ -12,10 +13,12 @@ description:
 requires:
   - rdoc 3~
   - detroit (build)
+  - reap    (build)
 
 resources:
   home: http://rubyworks.github.com/shomen
   work: http://github.com/rubyworks/shomen
+  docs: http://github.com/rubyworks/shomen/wiki
 
 repositories:
   upstream: git://github.com/rubyworks/shomen.git

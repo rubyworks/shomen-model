@@ -1,6 +1,6 @@
 = Shomen Documentation Specification
 
-{Website}[http://rubyworks.github.com/shomen]
+{Website}[http://rubyworks.github.com/shomen] |
 {User Manual}[http://github.com/rubyworks/shomen/wiki]
 
 
@@ -18,6 +18,14 @@ By using a standard intermediary format, documentation parsers need only concern
 themselves with a single output target. And documentation templates in turn only
 need to concern themselves with a single input format to use regardless of the
 parsing system that was used to generate it.
+
+
+== Features
+
+* Update a single portable file to update documentation.
+* Site disc footprint is extra small thanks to CDNs.
+* Personalize site design to best fit your project.
+* Test drive other's customizations with your own remote docs!
 
 
 == Learn

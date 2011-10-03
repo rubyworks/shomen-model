@@ -4,6 +4,7 @@
 bin/shomen
 lib/shomen/cli/abstract.rb
 lib/shomen/cli/rdoc.rb
+lib/shomen/cli/tomdoc.rb
 lib/shomen/cli/yard.rb
 lib/shomen/cli.rb
 lib/shomen/core_ext/hash.rb
@@ -19,7 +20,6 @@ lib/shomen/model/module.rb
 lib/shomen/model/script.rb
 lib/shomen/model.rb
 lib/shomen/rdoc/extensions.rb
-lib/shomen/rdoc.0.rb
 lib/shomen/rdoc.rb
 lib/shomen/server.rb
 lib/shomen/tomdoc.rb
