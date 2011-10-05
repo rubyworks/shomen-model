@@ -1,7 +1,8 @@
-= Shomen Documentation Specification
+= Shomen
 
 {Website}[http://rubyworks.github.com/shomen] |
-{User Manual}[http://github.com/rubyworks/shomen/wiki]
+{User Manual}[http://github.com/rubyworks/shomen/wiki] |
+{Development}[http://github.com/rubyworks/shomen]
 
 
 == Description

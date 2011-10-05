@@ -8,7 +8,7 @@ String.prototype.escapeHTML = function () {
          replace(/\>/g,'&gt;').
          replace(/\</g,'&lt;').
          replace(/\"/g,'&quot;')
-  );                                          
+  );                                 
 };
 
 //
@@ -20,9 +20,7 @@ HyperVisor = {
     var url     = urlVars['doc'] || 'doc.json'
 
     $.getJSON(url, function(data) {
-      // set up documentation
-
-      // alphabetical table
+      // set up documentation & alphabetical table
       table = new Array();
       $.each(data, function(key, doc) {
         doc.key = key;  // ensure key is the same

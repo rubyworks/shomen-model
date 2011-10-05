@@ -1,7 +1,7 @@
 --- 
 name: shomen
 title: Shomen
-summary: Standardized Object-Oriented Documentation Format
+summary: Standardized Object-Oriented Documentation Model
 authors: Thomas Sawyer <transfire@gmail.com>
 created: 2010-07-01
 
