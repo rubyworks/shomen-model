@@ -34,10 +34,10 @@ alternatives: []
 revision: 0
 name: shomen
 title: Shomen
-summary: Standardized Object-Oriented Documentation Format
+summary: Standardized Object-Oriented Documentation Model
 created: '2010-07-01'
 description: Shomen defines a standard API documentaiton format for object-oriented
   software (Ruby programs in particular) which can be used by documentation interfaces,
   e.g. Hypervisor, to render API documentation
 version: 0.1.0
-date: '2011-09-25'
+date: '2011-10-05'
