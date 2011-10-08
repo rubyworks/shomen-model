@@ -26,12 +26,12 @@ parsing system that was used to generate it.
 * Update a single portable file to update documentation.
 * Site disc footprint is extra small thanks to CDNs.
 * Personalize site design to best fit your project.
-* Test drive other's customizations with your own remote docs!
+* Test drive others customizations with your own remote docs!
 
 
 == Learn
 
-To learn more about shomen please vist:
+To learn more about Shomen please visit:
 
 * http://rubyworks.github.com/shomen
 * http://github.com/rubyworks/shomen/wiki
@@ -49,7 +49,7 @@ For yard it's basically the same deal.
 
   $ shomen yard lib [A-Z]*.* -r README.rdoc > site/doc.json
 
-YARD will use `.yardopts` if it is present, so you genetally do not need to
+YARD will use `.yardopts` if it is present, so you generally do not need to
 to specify any parameters, e.g.
 
   $ shomen yard > site/doc.json
@@ -57,9 +57,23 @@ to specify any parameters, e.g.
 Now that you have a Shomen documentation file for you project, you simply need 
 to pair it up with a viewer. Currently that means using one of the following
 
-* {HyperVisor}[http://github.com/rubyworks/hypervisor].
-* {Rebecca}[http://github.com/rubyworks/rebecca].
-* {Rubyfaux}[http://github.com/rubyworks/rubyfaux].
+* {HyperVisor}[http://github.com/rubyworks/hypervisor]
+* {Rebecca}[http://github.com/rubyworks/rebecca]
+* {Rubyfaux}[http://github.com/rubyworks/rubyfaux]
+
+You can copy anyone of those repos to your website (e.g. site/) and run with it.
+If you want to try it out locally, Shomen provides a static server to make it easy.
+
+  $ cd site
+  $ shomen server
+
+Viewers don't necessarily need to be copied. All three above can take
+a `doc={url-to-shomen-json-file}` http parameter and server up the docs remotely.
+You just need to publish your `doc.json` file to a publicly accessible URL.
+Note, I recommend that in this case you name the file more specifically,
+e.g. `myapp-1.0.0.json`.
+
+See the viewer projects for more information.
 
 
 == Copying
