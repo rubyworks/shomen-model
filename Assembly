@@ -1,33 +1,20 @@
 ---
 email:
   service : Email
-  file    : ~
-  subject : ~
   mailto  : 
     - ruby-talk@ruby-lang.org
     - rubyworks-mailinglist@googlegroups.com
-  active  : true
 
 github:
-  active: true
+  gh_pages: web
 
 gem:
-  service: gem
   active : true
 
-ri:
-  service: ri
-  include: ~
-  exclude: ~
-  output : ri
-  active : false
-
 dnote:
-  service  : dnote
-  files    : ~
-  labels   : ~
-  output   : log/notes.rdoc
-  active   : true
+  labels: ~
+  title: Source Notes
+  output: log/notes.html
 
 locat:
   title    : ~
@@ -37,7 +24,8 @@ locat:
   active   : false
 
 vclog:
-  service  : VClog
-  output   : log/history.rdoc
-  active   : false
+  output:
+    - log/history.rdoc
+    - log/changes.rdoc
+
 
