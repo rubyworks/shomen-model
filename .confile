@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+qed do
+  profile :cov do
+    require 'simplecov'
+    SimpleCov.start do
+      coverage_dir 'log/coverage'
+      add_group "RDoc", "lib/shomen/rdoc.rb"
+      add_group "YARD", "lib/shomen/yard.rb"
+    end
+  end
+end
+
+
+# NOTE: This file currently does nothing, but I am thinking about
+# using this kind of "universal" config file for some of my tools
+# instead of th emany different per-tool configurations. So this 
+# example is here at the moment as food for thought.
+#
+#  ---
+#  qed:
+#    profiles: 
+#      coverage: |
+#        require 'simplecov'
+#        SimpleCov.start do
+#          coverage_dir 'log/coverage'
+#          add_group "RDoc", "lib/shomen/rdoc.rb"
+#          add_group "YARD", "lib/shomen/yard.rb"
+#        end
+#
+# Can we also support YAML ?
