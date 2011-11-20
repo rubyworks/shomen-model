@@ -1,0 +1,3 @@
+Shomen defines a standard API documentaiton format for object-oriented software
+(Ruby programs in particular) which can be used by documentation interfaces, 
+e.g. Hypervisor, to render API documentation.
