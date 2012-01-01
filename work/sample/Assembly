@@ -1,0 +1,53 @@
+---
+# Generate Samples
+
+sample-redfish:
+  service  : RDoc
+  title    : Fish Sampler
+  format   : redfish
+  include  : [README, lib]
+  main     : README
+  output   : site/samples/redfish
+  extra    : ~
+  active   : true
+
+sample-longfish:
+  service  : RDoc
+  title    : Fish Sampler
+  format   : longfish
+  include  : [README, lib]
+  main     : README
+  output   : ../samples/longfish
+  extra    : ~
+  active   : true
+
+sample-tabfish:
+  service  : RDoc
+  title    : Fish Sampler
+  format   : tabfish
+  include  : [README, lib]
+  main     : README
+  output   : ../samples/tabfish
+  extra    : ~
+  active   : true
+
+sample-onefish:
+  service  : RDoc
+  title    : Fish Sampler
+  format   : onefish
+  include  : [README, lib]
+  main     : README
+  output   : ../samples/onefish
+  extra    : ~
+  active   : true
+
+sample-twofish:
+  service  : RDoc
+  title    : Fish Sampler
+  format   : twofish
+  include  : [README, lib]
+  main     : README
+  output   : ../samples/twofish
+  extra    : ~
+  active   : true
+

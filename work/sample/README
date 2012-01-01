@@ -1,0 +1,54 @@
+= RDocodile's Fish Sampler
+
+http://rdocodile.github.com
+
+
+== Description
+
+RDocodile's Fish Sampler is as a mock Ruby project used to demostrate
+RDocodile's many RDoc formats. RDocodile is the RDoc Beautification project.
+It houses a number of format repositories and an reusable RDoc component
+system.
+
+
+== Features
+
+* Provides many practical, yet aesthetically pleasing templates.
+* Provides a component system to make RDOc formats easier to build and extended.
+
+
+== Lorem Ipsum
+
+Dolor sit amet, consectetur adipiscing elit. Sed tristique metus id
+nisl suscipit et pulvinar lectus pulvinar. Mauris eu leo sit amet magna rutrum
+pharetra. Aliquam eu est eu erat tempor dapibus et sit amet urna. Nunc vulputate
+urna ipsum. In venenatis gravida est, ullamcorper commodo lorem laoreet eget.
+Aliquam non ipsum ante, a mollis quam. Cras in risus id dolor lacinia ornare.
+
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac
+turpis egestas. Etiam rutrum nulla a mauris condimentum non egestas felis
+tincidunt. Nulla mi nisi, ullamcorper placerat gravida non, aliquet vel felis.
+Vivamus eu odio vel elit bibendum congue.
+
+
+== Installation
+
+Installing via RubyGems is per the usual:
+
+  $ sudo gem install yummy-fish-sampler
+
+
+== Copyright
+
+Rdocodile's Fish Sampler
+
+Copyright (c) 2009 Thomas Sawyer, CC-A License
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+

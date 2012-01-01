@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+# Generate Samples
+
+desc "generate sample"
+task :document do
+  #sh "shomen rdoc -T 'Fish Sampler' -m README README lib"
+  sh "shomen rdoc -m README README lib"
+end
+
