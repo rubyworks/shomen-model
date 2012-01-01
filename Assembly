@@ -17,11 +17,7 @@ dnote:
   output: log/notes.html
 
 locat:
-  title    : ~
-  loadpath : ~
-  exclude  : ~
-  output   : ~
-  active   : false
+  output: log/locat.html
 
 vclog:
   output:

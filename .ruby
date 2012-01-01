@@ -1,10 +1,12 @@
 ---
+source:
+- var
 authors:
-- name: Thomas Sawyer
+- name: trans
   email: transfire@gmail.com
 copyrights: []
 replacements: []
-conflicts: []
+alternatives: []
 requirements:
 - name: rdoc
   version: 3~
@@ -17,27 +19,28 @@ requirements:
   - build
   development: true
 dependencies: []
+conflicts: []
 repositories:
 - uri: git://github.com/rubyworks/shomen.git
   scm: git
   name: upstream
 resources:
   home: http://rubyworks.github.com/shomen
-  work: http://github.com/rubyworks/shomen
   docs: http://github.com/rubyworks/shomen/wiki
+  code: http://github.com/rubyworks/shomen
+  bugs: http://github.com/rubyworks/shomen/issues
+  mail: http://groups.google.com/groups/rubyworks-mailinglist
+extra: {}
 load_path:
 - lib
-extra:
-  manifest: MANIFEST
-source: []
-alternatives: []
 revision: 0
-name: shomen
-title: Shomen
-summary: Standardized Object-Oriented Documentation Model
 created: '2010-07-01'
-description: Shomen defines a standard API documentaiton format for object-oriented
-  software (Ruby programs in particular) which can be used by documentation interfaces,
-  e.g. Hypervisor, to render API documentation
-version: 0.1.0
-date: '2011-10-05'
+summary: Standardized Object-Oriented Documentation Model
+title: Shomen
+version: 0.1.1
+name: shomen
+description: ! "Shomen defines a standard API documentaiton format for object-oriented
+  software\n(Ruby programs in particular) which can be used by documentation interfaces,
+  \ne.g. Hypervisor, to render API documentation."
+organization: rubyworks
+date: '2011-11-19'
