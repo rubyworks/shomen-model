@@ -236,7 +236,7 @@ module Shomen
 
       model.file     = '/'+yard_method.file
       model.line     = yard_method.line.to_i
-      model.source   = yard_method.source
+      model.source   = yard_method.source.to_s.strip
       model.language = yard_method.source_type.to_s
       model.dynamic  = yard_method.dynamic
 
