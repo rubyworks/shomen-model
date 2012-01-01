@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require 'yard'
 require 'shomen/metadata'
 require 'shomen/model'
@@ -69,6 +71,11 @@ module Shomen
     end
 
   private
+
+    #
+    def project_metadata
+      @project_metadata ||= Shomen::Metadata.new
+    end
 
     # Collect files given list of +globs+.
     def collect_files
@@ -184,6 +191,12 @@ module Shomen
     def generate_method(yard_method)
       debug_msg(yard_method.to_s)
 
+      # not sure what to do with methods with no signatures ?
+      if !yard_method.signature
+        debug_msg "no method signature -- #{yard_method.inspect}"
+        return 
+      end
+
       model = Model::Method.new
       #class_model = object.scope == :instance ? Shomen::Module::Method : Shomen::Model::Function
 
@@ -237,7 +250,6 @@ module Shomen
       args, block = [], {}
 
       image, returns = yard_method.signature.split(/[=-]\>/)
-
       image = image.strip
       if i = image.index(/\)\s*\{/)
         block['image'] = image[i+1..-1].strip
@@ -315,11 +327,20 @@ module Shomen
       # FIXME: make absolute
       absolute_path = yard_script.to_s
 
-      model.path     = yard_script.to_s
-      model.name     = File.basename(absolute_path)
-      model.mtime    = File.mtime(absolute_path)
-      model.source   = File.read(absolute_path)
-      model.language = mime_type(absolute_path)
+      model.path  = yard_script.to_s
+      model.name  = File.basename(absolute_path)
+      model.mtime = File.mtime(absolute_path)
+
+      if Shomen.source?
+        model.source   = File.read(absolute_path) #file.comment
+        model.language = mime_type(absolute_path)
+      end
+
+      scm_uri = project_metadata['scm_uri'] || Shomen.scm_uri
+      if scm_uri
+        model.uri      = File.join(scm_uri, model.path)
+        model.language = mime_type(absolute_path)
+      end
 
       #  model.header        = ""
       #  model.footer        = ""

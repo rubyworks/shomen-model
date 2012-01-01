@@ -28,12 +28,14 @@ module Shomen
       def run(argv)
         require 'shomen/rdoc'
 
-        defaults = {}
-        defaults[:format]  = :json
-        defaults[:force]   = false
-        defaults[:source]  = true
+        options = {}
+        options[:format]  = :json
+        options[:force]   = false
+        options[:source]  = true
 
-        options = parse(argv, :format, :force, :visibility, :main, :source, defaults)
+        parser = usual_parser(:format, :force, :visibility, :main, :source, options)
+
+        parser.parse!(argv)
 
         if !options[:force] && !root?
           $stderr.puts "Not a project directory. Use --force to override."

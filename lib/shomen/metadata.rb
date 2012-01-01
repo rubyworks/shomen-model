@@ -31,13 +31,13 @@ module Shomen
           data['authors']     = [spec.author],
           data['summary']     = spec.summary,
           data['description'] = spec.description,
-          data['resources']   = {'homepage' => spec.homepage},
+          data['resources']   = {'homepage' => spec.homepage}
         else
           # TODO: Raise error instead ?
           data['name'] = File.basename(Dir.pwd)
         end
         data['path']   = '(metadata)'
-        data['markup'] = 'rdoc'
+        data['markup'] = 'rdoc'  # FIXME
         data
       )
     end

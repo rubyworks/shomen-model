@@ -167,9 +167,13 @@ protected
   end
 
   #
+  def project_metadata
+    @project_metadata ||= Shomen::Metadata.new
+  end
+
+  #
   def generate_metadata
-    metadata = Shomen::Metadata.new
-    @table['(metadata)'] = metadata.to_h
+    @table['(metadata)'] = project_metadata.to_h
   end
 
   # Add constants to table.
@@ -412,9 +416,17 @@ protected
       model.name      = File.basename(rdoc_file.full_name)
       model.mtime     = File.mtime(absolute_path)
 
+      # http://github.com/rubyworks/qed/blob/master/ lib/qed.rb
+
       if Shomen.source?
-        model.source    = File.read(absolute_path) #file.comment
-        model.language  = mime_type(absolute_path)
+        model.source   = File.read(absolute_path) #file.comment
+        model.language = mime_type(absolute_path)
+      end
+
+      scm_uri = project_metadata['scm_uri'] || Shomen.scm_uri
+      if scm_uri
+        model.uri      = File.join(scm_uri, model.path)  # TODO: use open-uri ?
+        model.language = mime_type(absolute_path)
       end
 
       #model.header   =

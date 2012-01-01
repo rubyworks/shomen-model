@@ -9,12 +9,14 @@ module Shomen
       #
       def self.type; 'script'; end
 
-      #
       attr_accessor :source
 
-      # Route textto source.
+      # Route text to source.
       alias :text  :source
       alias :text= :source=
+
+      # Source code URI.
+      attr_accessor :uri
 
       #
       attr_accessor :language

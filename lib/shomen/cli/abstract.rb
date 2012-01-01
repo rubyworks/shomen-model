@@ -18,20 +18,21 @@ module Shomen
       end
 
       #
-      def parse(argv, *choices)
-        options = (Hash === choices.last ? choices.pop : {})
+      def usual_parser(argv, *choices)
+        choices = [:debug, :warn, :help] + choices
+        parser(*choices)
+      end
+
+      #
+      def parser(*choices)
         parser  = OptionParser.new
+        options = choices.pop
 
         choices.each do |choice|
           send("option_#{choice}", parser, options)
         end
-        option_debug(parser, options)
-        option_warn(parser, options)
-        option_help(parser, options)
 
-        parser.parse!(argv)
-
-        return options
+        parser
       end
 
 =begin
@@ -59,8 +60,11 @@ module Shomen
 
       #
       def option_source(parser, options)
-        parser.on('-s', '--[no-]source', 'include full source in script documentation') do |bool|
-          Shomen.source = bool
+        parser.on('-s', '--source', 'include full source in script documentation') do
+          Shomen.source = true
+        end
+        parser.on('-u', '--scm-uri URI', 'link to source code via SCM URI') do |uri|
+          Shomen.scm_uri = uri
         end
       end
 
@@ -88,7 +92,7 @@ module Shomen
       #
       def option_help(parser, options)
         parser.on_tail('--help') do
-          puts opt
+          puts parser
           exit 0
         end
       end
@@ -107,6 +111,10 @@ module Shomen
 
   end
 
+  # TODO: Rather source and source_uri not be global, but we have a problem getting them
+  # into the RDoc Generator. Need to figure out how to get these in some
+  # way via initializer.
+
   #
   def self.source?
     @source
@@ -115,6 +123,16 @@ module Shomen
   #
   def self.source=(bool)
     @source = bool
+  end
+
+  #
+  def self.scm_uri
+    @scm_uri
+  end
+
+  #
+  def self.scm_uri=(uri)
+    @scm_uri = uri
   end
 
 end

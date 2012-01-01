@@ -4,6 +4,8 @@ module Shomen
 
     require 'shomen/cli/abstract'
 
+    # TODO: Convert YARD CLI into a YARD plugin, possible?
+
     # YARD command line interface.
     #
     # Unlike the RDoc command, this passes ARGV on to YARD's actual CLI interface,
@@ -37,17 +39,15 @@ module Shomen
 
         # TODO: support -y/--yaml or -j/--json ?
 
-        format = (
-          if i = argv.index('--format') || argv.index('-f')
-            argv[i+1]
-            argv.delete_at(i)
-            argv.delete_at(i)
-          else
-            'json'
-          end
-        )
+        options = {}
 
-        case format
+        #parser = parser(:format, :source, options)
+        #parser.order!(argv)
+        #argv = parser.permute(argv)
+
+        options[:format] = extact_option(argv, :format, :f, 'json')
+
+        case options[:format]
         when 'json', 'yaml'
         else
           $stderr.puts "ERROR: Format must be 'yaml` or 'json`."
@@ -64,9 +64,10 @@ module Shomen
 
         files    = yard.options[:files].map(&:filename) + yard.files
         database = yard.options[:db]
+        #yardopts = yard.options[:yardopts]
 
-        options = {}
-        options[:format] = format
+        #options = {}
+        #options[:format] = format
         options[:files]  = files
         options[:db]     = database
 
@@ -75,11 +76,11 @@ module Shomen
         yard = Shomen::YardAdaptor.new(options)
         yard.generate
 
-        case format
+        case options[:format]
         when 'yaml'
           $stdout.puts(yard.table.to_yaml)
         else
-          $stdout.puts(yard.table.to_json)
+          $stdout.puts(force_encoding(yard.table).to_json)
         end
       end
 
@@ -111,6 +112,34 @@ module Shomen
       #  end
       #end
 
+      #
+      def extact_option(argv, name, short, default)
+        if i = argv.index("--#{name}") || argv.index("-#{short}")
+          argv.delete_at(i)
+          argv.delete_at(i)
+        else
+          default
+        end
+      end
+
+      #
+      def force_encoding(value)
+        case value
+        when String
+          value = value.dup if value.frozen?
+          value.force_encoding('UTF-8')
+        when Array
+          value.map{ |v| force_encoding(v) }
+        when Hash
+          new = {}
+          value.each do |k,v|
+            k = force_encoding(k)
+            v = force_encoding(v)
+            new[k] = v
+          end
+          new
+        end
+      end
     end
 
   end
