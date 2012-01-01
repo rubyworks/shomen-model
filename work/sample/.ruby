@@ -1,28 +1,28 @@
 ---
+source:
+- PROFILE
 authors:
 - name: Thomas Sawyer
-copyrights: []
+copyrights:
+- holder: Rubyworks
+  year: '2011'
 replacements: []
-conflicts: []
+alternatives: []
 requirements: []
 dependencies: []
+conflicts: []
 repositories: []
 resources:
   home: http://rubyworks.github.com/fish
   work: http://github.com/rubyworks/fish
   blog: http://rubyworks.github.com/
   mail: http://googlegroups.com/group/rubyworks-mailinglist
+extra: {}
 load_path:
 - lib
-extra: {}
-source: []
-alternatives: []
 revision: 0
 name: fish-sampler
 title: Fish Sampler
 version: 1.0.0
-description: ! 'RDocodile is the RDoc Beautification project. Is houses a number of
-  project
-
-  repositories'
-date: '2011-08-20'
+description: Fish Sampler is a sample project for demonstrating Ruby documentation.
+date: '2012-01-01'

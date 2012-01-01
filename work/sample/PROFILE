@@ -1,6 +1,11 @@
 ---
 name   : fish-sampler
 title  : Fish Sampler
+version: 1.0.0
+
+description:
+  Fish Sampler is a sample project for demonstrating
+  Ruby documentation.
 
 authors:
 - Thomas Sawyer
@@ -11,3 +16,7 @@ resources:
   blog: http://rubyworks.github.com/
   mail: http://googlegroups.com/group/rubyworks-mailinglist
 
+copyrights:
+  - 2011 Rubyworks
+
+scm_uri: "https://github.com/rubyworks/shomen/blob/master/work/sample"

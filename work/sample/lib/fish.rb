@@ -72,7 +72,7 @@ module FishSampler
     # New Old Fish
     def initialize_qualities
       super
-      @qualties = << :old
+      @qualties << :old
     end
   end
 
