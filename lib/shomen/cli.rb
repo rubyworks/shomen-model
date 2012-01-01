@@ -5,6 +5,7 @@ module Shomen
     case cmd = argv.shift
     when 'server'
       require 'shomen/server'
+      Shomen::Server.start(*argv)
     when 'tomdoc'
       require 'shomen/cli/tomdoc'
       CLI::TomDocCommand.run(*argv)

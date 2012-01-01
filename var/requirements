@@ -1,4 +1,5 @@
 ---
 - rdoc 3~
+- rack
 - detroit (build)
 - reap    (build)
