@@ -185,7 +185,7 @@ protected
       model.path      = rdoc.parent.full_name + '::' + rdoc.name
       model.name      = rdoc.name
       model.namespace = rdoc.parent.full_name
-      model.comment   = rdoc.comment
+      model.comment   = rdoc.comment.text
       model.format    = 'rdoc'
       model.value     = rdoc.value
       model.files     = ["/#{rdoc.file.full_name}"]
@@ -212,7 +212,7 @@ protected
       model.namespace        = rdoc_class.full_name.split('::')[0...-1].join('::')
       model.includes         = rdoc_class.includes.map{ |x| x.name }  # FIXME: How to "lookup" full name?
       model.extensions       = []                                     # TODO:  How to get extensions?
-      model.comment          = rdoc_class.comment
+      model.comment          = rdoc_class.comment.text
       model.format           = 'rdoc'
       model.constants        = rdoc_class.constants.map{ |x| complete_name(x.name, rdoc_class.full_name) }
       model.modules          = rdoc_class.modules.map{ |x| complete_name(x.name, rdoc_class.full_name) }
@@ -262,7 +262,7 @@ protected
       model.path        = method_name(rdoc_method)
       model.name        = rdoc_method.name
       model.namespace   = rdoc_method.parent_name
-      model.comment     = rdoc_method.comment
+      model.comment     = rdoc_method.comment.text
       model.format      = 'rdoc'
       model.aliases     = rdoc_method.aliases.map{ |a| method_name(a) }
       model.alias_for   = method_name(rdoc_method.is_alias_for)
@@ -326,7 +326,7 @@ protected
       #  'path'         => full_name,
       #  'name'         => m.name,
       #  'namespace'    => m.parent_name,
-      #  'comment'      => m.comment,
+      #  'comment'      => m.comment.text,
       #  'access'       => m.visibility.to_s,
       #  'rw'           => m.rw,  # TODO: better name ?
       #  'singleton'    => m.singleton,
