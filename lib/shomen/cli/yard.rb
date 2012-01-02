@@ -18,46 +18,37 @@ module Shomen
     class YARDCommand < Abstract
 
       #
-      def self.run(*argv)
-        new.run(argv)
+      def self.cli(*argv)
+        new(*argv)
       end
 
       # New Shomen YARD command line interface.
-      def initialize
+      def initialize(*argv)
+        super(*argv)
       end
 
       #
-      def run(argv)
+      def run(*argv)
         require 'shomen/yard'
 
-        force = argv.delete('--force')
+        #force = argv.delete('--force')
 
-        if !(force or root?)
+        if !(force? or root?)
           $stderr.puts "ERROR: Not a project directory. Use --force to override."
           exit -1
         end
 
-        # TODO: support -y/--yaml or -j/--json ?
-
-        options = {}
-
+        #options = {}
         #parser = parser(:format, :source, options)
         #parser.order!(argv)
         #argv = parser.permute(argv)
-
-        options[:format] = extact_option(argv, :format, :f, 'json')
-
-        case options[:format]
-        when 'json', 'yaml'
-        else
-          $stderr.puts "ERROR: Format must be 'yaml` or 'json`."
-          exit -1
-        end
+        #options[:format] = extact_option(argv, :format, :f, 'json')
 
         argv.unshift('-n')  # do not generate yard documentation
         argv.unshift('-q')  # supress yard's usual output
 
-        YARD::Registry.clear  # clear the registry in memory to remove any previous runs
+        # clear the registry in memory to remove any previous runs
+        YARD::Registry.clear
 
         yard = YARD::CLI::Yardoc.new
         yard.run(*argv)
@@ -66,7 +57,7 @@ module Shomen
         database = yard.options[:db]
         #yardopts = yard.options[:yardopts]
 
-        #options = {}
+        options = {}
         #options[:format] = format
         options[:files]  = files
         options[:db]     = database
@@ -113,14 +104,14 @@ module Shomen
       #end
 
       #
-      def extact_option(argv, name, short, default)
-        if i = argv.index("--#{name}") || argv.index("-#{short}")
-          argv.delete_at(i)
-          argv.delete_at(i)
-        else
-          default
-        end
-      end
+      #def extact_option(argv, name, short, default)
+      #  if i = argv.index("--#{name}") || argv.index("-#{short}")
+      #    argv.delete_at(i)
+      #    argv.delete_at(i)
+      #  else
+      #    default
+      #  end
+      #end
 
       #
       def force_encoding(value)
