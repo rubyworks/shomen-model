@@ -46,7 +46,7 @@ module Shomen
       @root = argv.first || Dir.pwd
 
       @options[:app] = app
-      @options[:pid] = "#{tmp_dir}/pids/server.pid"
+#      @options[:pid] = "#{tmp_dir}/pids/server.pid"
 
       @options[:Port] ||= '4321'
     end
@@ -54,19 +54,19 @@ module Shomen
     # THINK: Should we be using a local tmp directory instead?
     #        Then again, why do we need them at all, really?
 
-    # Temporary directory used by the rack server.
-    def tmp_dir
-      @tmp_dir ||= File.join(Dir.tmpdir, 'brite', root)
-    end
+#    # Temporary directory used by the rack server.
+#    def tmp_dir
+#      @tmp_dir ||= File.join(Dir.tmpdir, 'shomen', root)
+#    end
 
     # Start the server.
     def start
       #ensure_shomen_site
 
-      # create required tmp directories if not found
-      %w(cache pids sessions sockets).each do |dir_to_make|
-        FileUtils.mkdir_p(File.join(tmp_dir, dir_to_make))
-      end
+#      # create required tmp directories if not found
+#      %w(cache pids sessions sockets).each do |dir_to_make|
+#        FileUtils.mkdir_p(File.join(tmp_dir, dir_to_make))
+#      end
 
       ::Rack::Server.start(options)
     end
