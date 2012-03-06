@@ -15,18 +15,18 @@ with a documented method using the directive:
     end
   end
 
-Running the script through shomen command line interface the signatures list
+Running the script through shomen via rdoc the signatures list
 should have only three entries.
 
   example = @shomen['ExampleClass#my_method']
-
-  example['signatures'].size  #=> 3
+  example['interfaces'].size  #=> 3
 
 === Literal Interface
 
-Lets get a closer look at the first signature.
+Lets get a closer look at the last signature, which is always the
+literal interface.
 
-  signature = example['signatures'].first
+  signature = example['interfaces'].last
 
 The first signature should match the literal definition.
 
@@ -51,7 +51,7 @@ under the `:call-seq:` directive.
 
 Lets get a closer look at the first of these.
 
-  signature = example['signatures'][1]
+  signature = example['interfaces'][0]
 
 The signature should match the provided image.
 
@@ -72,7 +72,7 @@ should return `nil`.
 
 Now lets' look at the second virtual signature.
 
-  signature = example['signatures'][2]
+  signature = example['interfaces'][1]
 
 The signature should match the provided image.
 
