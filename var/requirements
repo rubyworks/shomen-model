@@ -1,5 +1,6 @@
 ---
-- rdoc 3~
+- rdoc 3+
+- yard
 - rack
 - detroit (build)
 - reap    (build)
