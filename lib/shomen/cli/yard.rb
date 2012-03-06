@@ -55,6 +55,7 @@ module Shomen
 
         files    = yard.options[:files].map(&:filename) + yard.files
         database = yard.options[:db]
+        format   = yard.options[:format]
         #yardopts = yard.options[:yardopts]
 
         options = {}
@@ -67,8 +68,8 @@ module Shomen
         yard = Shomen::YardAdaptor.new(options)
         yard.generate
 
-        case options[:format]
-        when 'yaml'
+        case format
+        when 'yaml', :yaml
           $stdout.puts(yard.table.to_yaml)
         else
           $stdout.puts(force_encoding(yard.table).to_json)

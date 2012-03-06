@@ -134,8 +134,8 @@ module Shomen
         options.each do |opt|
           i = argv.index(opt)
           if i
-            argv.delete_index(i)
-            argv.delete_index(i)
+            argv.delete_at(i)
+            argv.delete_at(i)
           end
         end
         argv
