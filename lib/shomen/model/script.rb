@@ -40,14 +40,14 @@ module Shomen
       # Time stamp when script was last modifed.
       attr_accessor :mtime
 
-      alias :modified, :mtime
-      alias :modified=, :mtime=
+      alias :modified :mtime
+      alias :modified= :mtime=
 
       # Time stamp when script was first created.
       attr_accessor :created
 
-      alias :ctime, :created
-      alias :ctime=, :created=
+      alias :ctime :created
+      alias :ctime= :created=
 
       # Other scripts required by this script.
       attr_accessor :requires
