@@ -24,4 +24,6 @@ vclog:
     - log/history.rdoc
     - log/changes.rdoc
 
+mast:
+  active: true
 

@@ -1,3 +1,4 @@
+.rdoc_options
 .reap/digest
 .yardoc
 doc

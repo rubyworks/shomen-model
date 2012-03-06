@@ -1,18 +1,20 @@
 #!/usr/bin/env ruby
 
+# Testing
+
 desc 'ruby specs for both rdoc and yard'
-task 'test' do
+task 'spec' do
   spec_run('rdoc')
   spec_run('yard')
 end
 
 desc 'run spec for rdoc'
-task 'test-rdoc' do
+task 'spec-rdoc' do
   spec_run('rdoc')
 end
 
-desc ''
-task 'run specs for yard' do
+desc 'run specs for yard'
+task 'spec-yard' do
   spec_run('yard')
 end
 
@@ -25,6 +27,8 @@ def spec_run(parser='rdoc')
   end
 end
 
+#
+
 desc "package gem"
 task :package do
   sh %{RUBYOPT="-roll -rubygems" detroit package}
@@ -34,4 +38,5 @@ desc "install gem"
 task :install => :package do
   sh %{sudo gem install --no-ri pkg/shomen-0.1.0.gem}
 end
+
 

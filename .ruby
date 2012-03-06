@@ -5,11 +5,10 @@ authors:
 - name: trans
   email: transfire@gmail.com
 copyrights: []
-replacements: []
-alternatives: []
 requirements:
 - name: rdoc
-  version: 3~
+  version: 3+
+- name: yard
 - name: rack
 - name: detroit
   groups:
@@ -20,6 +19,7 @@ requirements:
   - build
   development: true
 dependencies: []
+alternatives: []
 conflicts: []
 repositories:
 - uri: git://github.com/rubyworks/shomen.git
@@ -44,4 +44,4 @@ description: ! "Shomen defines a standard API documentaiton format for object-or
   software\n(Ruby programs in particular) which can be used by documentation interfaces,
   \ne.g. Hypervisor, to render API documentation."
 organization: rubyworks
-date: '2012-01-01'
+date: '2012-03-06'
