@@ -1,15 +1,18 @@
 #!/usr/bin/env ruby
 
-trip 'test' do
+desc 'ruby specs for both rdoc and yard'
+task 'test' do
   spec_run('rdoc')
   spec_run('yard')
 end
 
-trip 'test-rdoc' do
+desc 'run spec for rdoc'
+task 'test-rdoc' do
   spec_run('rdoc')
 end
 
-trip 'test-yard' do
+desc ''
+task 'run specs for yard' do
   spec_run('yard')
 end
 
@@ -21,3 +24,14 @@ def spec_run(parser='rdoc')
     system "parser=#{parser} qed -Ilib spec/*.rdoc spec/09_yard/*.rdoc"
   end
 end
+
+desc "package gem"
+task :package do
+  sh %{RUBYOPT="-roll -rubygems" detroit package}
+end
+
+desc "install gem"
+task :install => :package do
+  sh %{sudo gem install --no-ri pkg/shomen-0.1.0.gem}
+end
+
