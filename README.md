@@ -59,12 +59,12 @@ to specify any parameters, e.g.
 Now that you have a Shomen documentation file for you project, you simply need 
 to pair it up with a viewer. Currently that means using one of the following
 
-* {HyperVisor}[http://github.com/rubyworks/hypervisor]
-* {Rebecca}[http://github.com/rubyworks/rebecca]
-* {Rubyfaux}[http://github.com/rubyworks/rubyfaux]
+* [HyperVisor](http://github.com/rubyworks/hypervisor)
+* [Rebecca](http://github.com/rubyworks/rebecca)
+* [Rubyfaux](http://github.com/rubyworks/rubyfaux)
 
 You can copy any of those repos to your website (e.g. site/) and run with it.
-If you want to try it out locally, we recommend using {thin}[http://code.macournoyer.com/thin/]
+If you want to try it out locally, we recommend using [thin](http://code.macournoyer.com/thin/)
 to view the site.
 
     $ cd site
@@ -91,4 +91,4 @@ Copyright (c) 2010 Thomas Sawyer
 
 Shomen is distributed under the terms of the *BSD-2-Clause* license.
 
-See COPYING.rdoc for license details.
+See License.txt for license details.
