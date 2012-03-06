@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+ignore(%w{doc log pkg tmp web work .reap .yardoc})
+
 # Testing
 
 desc 'ruby specs for both rdoc and yard'
