@@ -68,7 +68,12 @@ module Shomen
 #        FileUtils.mkdir_p(File.join(tmp_dir, dir_to_make))
 #      end
 
-      ::Rack::Server.start(options)
+      server = ::Rack::Server.start(options)
+
+      trap("INT") do
+        server.stop
+        exit
+      end
     end
 
     ## Ensure root is a Shomen Site.
