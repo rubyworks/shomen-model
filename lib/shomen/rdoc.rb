@@ -356,7 +356,7 @@ protected
     interface, returns = interface.split(/[=-]\>/)
     interface = interface.strip
     if i = interface.index(/\)\s*\{/)
-      block['signature'] = interface[i+1..-1].strip
+      block['image'] = interface[i+1..-1].strip
       interface = interface[0..i].strip
     end
 

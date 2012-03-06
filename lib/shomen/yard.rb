@@ -248,7 +248,6 @@ module Shomen
     # Parse a yard method's interface.
     def parse_interface(yard_method)
       args, block = [], {}
-
       image, returns = yard_method.signature.split(/[=-]\>/)
       image = image.strip
       if i = image.index(/\)\s*\{/)
