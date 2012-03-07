@@ -423,9 +423,9 @@ protected
         model.language = mime_type(absolute_path)
       end
 
-      scm_uri = project_metadata['scm_uri'] || Shomen.scm_uri
-      if scm_uri
-        model.uri      = File.join(scm_uri, model.path)  # TODO: use open-uri ?
+      webcvs = project_metadata['webcvs'] || Shomen.webcvs
+      if webcvs
+        model.uri      = File.join(webcvs, model.path)  # TODO: use open-uri ?
         model.language = mime_type(absolute_path)
       end
 

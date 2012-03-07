@@ -77,8 +77,8 @@ module Shomen
         parser.on('-s', '--source', 'include full source in script documentation') do
           Shomen.source = true
         end
-        parser.on('-u', '--scm-uri URI', 'link to source code via SCM URI') do |uri|
-          Shomen.scm_uri = uri
+        parser.on('-w', '--webcvs URI', 'prefix link to source code') do |uri|
+          Shomen.webcvs = uri
         end
       end
 
@@ -173,13 +173,13 @@ module Shomen
   end
 
   #
-  def self.scm_uri
-    @scm_uri
+  def self.webcvs
+    @webcvs
   end
 
   #
-  def self.scm_uri=(uri)
-    @scm_uri = uri
+  def self.webcvs=(uri)
+    @webcvs = uri
   end
 
 end
