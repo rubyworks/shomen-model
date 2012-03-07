@@ -3,5 +3,6 @@
 - yard
 - rack
 - qed     (test)
+- ae      (test)
 - detroit (build)
 - reap    (build)
