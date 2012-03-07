@@ -6,4 +6,5 @@ log
 pkg
 tmp
 web
-work/sample/doc.json
+work/sandbox/.yardoc
+work/sandbox/.rdoc
