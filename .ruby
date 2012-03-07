@@ -38,7 +38,7 @@ revision: 0
 created: '2010-07-01'
 summary: Standardized Object-Oriented Documentation Model
 title: Shomen
-version: 0.1.1
+version: 0.1.2
 name: shomen
 description: ! "Shomen defines a standard API documentaiton format for object-oriented
   software\n(Ruby programs in particular) which can be used by documentation interfaces,
