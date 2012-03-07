@@ -4,16 +4,12 @@ module Shomen
 
     require 'shomen/cli/abstract'
 
-    # TODO: Convert YARD CLI into a YARD plugin, possible?
-
-    # YARD command line interface.
+    # The YARD command line tool provides a utility to generate a Shomen doc
+    # file using YARD's .yardoc cache.
     #
-    # Unlike the RDoc command, this passes ARGV on to YARD's actual CLI interface,
-    # so all YARD commandline options are supported, albeit some options have
-    # no baring on the generation of a Shomen model).
-    #
-    # The yard command provides a utility to generate
-    # a Shomen doc file using YARD's .yardoc cache.
+    # YARDCommand passes ARGV on to YARD's actual CLI interface, so all YARD
+    # command line options are supported, albeit some options have no baring
+    # on the generation of a Shomen model.
     #
     class YARDCommand < Abstract
 

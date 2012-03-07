@@ -1,14 +1,17 @@
 module Shomen
 
-  begin; gem 'json'; rescue; end
-
   require 'shomen/cli/abstract'
-  require 'tmpdir'
-  require 'json'
+  #require 'tmpdir'
 
   module CLI
 
-    # RDoc command line interface.
+    # RDoc command line tool provides a utility to generate a Shomen doc
+    # file using RDoc's .rdoc cache.
+    #
+    # RDocCommand passes ARGV on to RDoc's actual CLI interface, so all RDoc
+    # command line options are supported, albeit some options have no baring
+    # on the generation of a Shomen model.
+    #
     class RDocCommand < Abstract
 
       #
@@ -47,14 +50,17 @@ module Shomen
         #  files = argv
         #end
 
-        tmpdir = File.join(Dir.tmpdir, 'shomen-rdoc')  # '/dev/null'
-        main   = Dir.glob('{README.*,README}').first
+        #argv.unshift('-n')  # do not generate yard documentation
+        argv.unshift('-q')  # supress yard's usual output
+
+        #tmpdir = File.join(Dir.tmpdir, 'shomen-rdoc')  # '/dev/null'
+        #main   = Dir.glob('{README.*,README}').first
 
         # remove 'rdoc'
-        argv.shift
+        #argv.shift
 
         # must be quiet
-        argv = ['-q'] + argv
+        #argv = ['-q'] + argv
 
         # divert output to no where
         remove_options(argv, '-o', '--output')

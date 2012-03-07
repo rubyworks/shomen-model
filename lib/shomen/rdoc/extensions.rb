@@ -110,6 +110,7 @@ class RDoc::Attr
   include RDoc::SourceCodeAccess
 end
 
+=begin
 
 # DEPRECATE ASAP
 require "rdoc/parser/c"
@@ -142,4 +143,5 @@ if ['2.4.2', '2.4.3'].include? RDoc::VERSION
   end
 end
 
+=end
 

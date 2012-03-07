@@ -1,10 +1,11 @@
 # encoding: UTF-8
 
-require 'yard'
 require 'shomen/metadata'
 require 'shomen/model'
 
 module Shomen
+
+  # TODO: Use a shared Adapter base class.
 
   # This adapter is used to convert YARD's documentation extracted
   # from a local store (`.yardoc`) to Shomen's pure-data format.
@@ -15,41 +16,53 @@ module Shomen
     # documentation.
     attr :table
 
+    #
+    attr :store
+
+    #
+    attr :files
+
     # New adaptor.
     def initialize(options)
-      @db    = options[:db]    || '.yardoc'
+      initialize_yard
+
+      @store = options[:store] || '.yardoc'
       @files = options[:files] || ['lib', 'README*']
+    end
+
+    #
+    def initialize_yard
+      require 'yard'
     end
 
     # Generate the shomen data structure.
     def generate
-      if not File.exist?(@db)
-        $stderr.puts "ERROR: YARD database not found -- '#{@db}`."
+      if not File.exist?(store)
+        $stderr.puts "ERROR: YARD database not found -- '#{store}`."
         exit -1
       end
 
       @table = {}
 
+      scripts = []
+
       generate_metadata
 
-      @registry = YARD::Registry.load!(@db)
+      @registry = YARD::Registry.load!(store)
       @registry.each do |object|
         case object.type
         when :constant
+          scripts.push(object.file)
           generate_constant(object)
         when :class, :module
+          scripts.push(object.file)
           generate_class(object)
           # TODO: is this needed?
-          object.constants.each do |c|
-            generate_constant(c)
-          end
-        #when :module
-        #  generate_module(object)
-        #  # TODO: is this needed?
-        #  object.constants.each do |c|
-        #    generate_constant(c)
-        #  end
+          #object.constants.each do |c|
+          #  generate_constant(c)
+          #end
         when :method
+          scripts.push(object.file)
           generate_method(object)
         else
           $stderr.puts "What is an #{object.type}? Ignored!"
@@ -67,6 +80,11 @@ module Shomen
         else
           generate_document(file)
         end
+      end
+
+      # TODO: Also pass parent ?
+      scripts.uniq.each do |file|
+        generate_script(file)
       end
     end
 
