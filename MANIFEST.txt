@@ -1,4 +1,6 @@
 #!mast .ruby .yardopts bin lib spec test [A-Z]*.*
+.ruby
+.yardopts
 bin/shomen
 bin/shomen-server
 lib/shomen/cli/abstract.rb
@@ -22,8 +24,6 @@ lib/shomen/rdoc.rb
 lib/shomen/server.rb
 lib/shomen/yard.rb
 lib/shomen.yml
-Manifest.0
-Assembly
+LICENSE.txt
+HISTORY.md
 README.md
-History.md
-License.txt
