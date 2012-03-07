@@ -10,6 +10,10 @@ requirements:
   version: 3+
 - name: yard
 - name: rack
+- name: qed
+  groups:
+  - test
+  development: true
 - name: detroit
   groups:
   - build

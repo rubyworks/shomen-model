@@ -2,5 +2,6 @@
 - rdoc 3+
 - yard
 - rack
+- qed     (test)
 - detroit (build)
 - reap    (build)
