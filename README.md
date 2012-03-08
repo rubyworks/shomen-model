@@ -31,33 +31,20 @@ system that was used to generate it.
 * Test drive others customizations with your own remote docs!
 
 
-## Learn
+## Instructions
 
-To learn more about Shomen please visit:
+To learn about Shomen in detail please visit:
 
-* http://rubyworks.github.com/shomen
-* http://github.com/rubyworks/shomen/wiki
+* [User Manual](http://github.com/rubyworks/shomen/wiki)
+* [API Documentation](http://rubyworks.github.com/shomen)
 
+Overall usage consists of generating a Shomen documentation file for a
+project. Typical usage looks something like:
 
-## Usage
+  $ shomen -R -r README.rdoc lib - [A-Z]*.* > doc.json
 
-Shomen currently supports parsing via RDoc and YARD. Specify the parser to
-use to the shomen command, e.g.
-
-    $ shomen rdoc lib [A-Z]*.* -m README.rdoc > site/doc.json
-
-If a `.document` file exists, of course, the file globs can be omitted.
-For yard it's basically the same deal.
-
-    $ shomen yard lib [A-Z]*.* -r README.rdoc > site/doc.json
-
-YARD will use `.yardopts` if it is present, so you generally do not need to
-to specify any parameters, e.g.
-
-    $ shomen yard > site/doc.json
-
-Now that you have a Shomen documentation file for you project, you simply need 
-to pair it up with a viewer. Currently that means using one of the following
+Next you want to pair up your doc.json file with a viewer. Currently that means
+using one of the following:
 
 * [HyperVisor](http://github.com/rubyworks/hypervisor)
 * [Rebecca](http://github.com/rubyworks/rebecca)
@@ -87,8 +74,9 @@ See the viewer projects for more information.
 
 ## Copying
 
-Copyright (c) 2010 Thomas Sawyer
+Copyright (c) 2010 Rubyworks
 
-Shomen is distributed under the terms of the *BSD-2-Clause* license.
+Shomen is distributed under the terms of the **BSD-2-Clause** license.
 
 See License.txt for license details.
+

@@ -37,9 +37,6 @@ module Shomen
     #
     DEFAULT_FORMAT = 'json'
 
-    # Command line options accepted by shomen command.
-    SHOMEN_OPTIONS = %w{debug warn help force source store format engine}
-
     #
     def self.run(*argv)
       new(*argv).run
@@ -73,43 +70,76 @@ module Shomen
     #
     attr_accessor :format
 
+    #
+    attr_accessor :source
+
+    #
+    attr_accessor :webcvs
+
+    #
+    attr_accessor :readme
+
+    #
+    attr_accessor :store
+
+    #
+    attr_accessor :markup
+
+    #
+    attr_accessor :scripts
+
+    #
+    attr_accessor :documents
+
+    #
+    attr_accessor :use_cache
+
+    #
+    def use_cache?
+      @use_cache
+    end
+
   private
 
     #
     def initialize(*argv)
-      @format   = DEFAULT_FORMAT
-      @store    = nil
-      @files    = []
-      @engine   = (Dir['.yardoc'].first ? :yard : :rdoc)
-      @pre_argv = nil
+      @engine     = (Dir['.yardoc'].first ? :yard : :rdoc)
+      @format     = DEFAULT_FORMAT
+      @readme     = Dir['README*'].first
+      @source     = false
+      @use_cache  = false
+      @store      = nil
+      @markup     = nil
+      @scripts    = []
+      @documents  = []
 
-      parse(argv, *SHOMEN_OPTIONS)
+      parse(argv)
+
+      @store ||= (engine == :yard ? '.yardoc' : '.rdoc')
     end
 
     #
     def run_rdoc
-      preconfigure_rdoc
+      preconfigure_rdoc unless use_cache?
       generate_from_rdoc     
     end
 
     #
     def run_yard
-      preconfigure_yard
+      preconfigure_yard unless use_cache?
       generate_from_yard
     end
 
     #
-    def parse(argv, *choices)
+    def parse(argv)
       if i = argv.index('-')
-        @pre_argv = argv[i+1..-1]
+        @documents = argv[i+1..-1]
         argv = argv[0...i]
       end
 
       parser = OptionParser.new
 
-      choices.each do |choice|
-        send("option_#{choice}", parser)
-      end
+      options(parser)
 
       parser.parse!(argv)
 
@@ -118,79 +148,65 @@ module Shomen
         exit -1
       end
 
-      @files = argv
+      @scripts = argv
     end
 
     #
-    def option_engine(parser)
+    def options(parser)
       parser.on('-Y', '--yard', 'use YARD for parsing') do
         self.engine = :yard
       end
       parser.on('-R', '--rdoc', 'use RDoc for parsing') do
         self.engine = :rdoc
       end
-    end
 
-    #
-    def option_format(parser)
-      parser.on('-y', '--yaml', 'output YAML instead of JSON') do
-        self.format = 'yaml'
-      end
       parser.on('-j', '--json', 'output JSON instead of YAML (default)') do
-        self.format = 'json'
+        self.format = :json
       end
-      #parser.on('-f', '--format NAME') do |format|
-      #  if not %w{json yaml}.include?(format)
-      #    $stderr.puts "ERROR: Format must be 'yaml` or 'json`."
-      #    exit -1
-      #  end
-      #  self.format = format
-      #end
-    end
+      parser.on('-y', '--yaml', 'output YAML instead of JSON') do
+        self.format = :yaml
+      end
 
-    #
-    def option_store(parser)
-      parser.on('-d', '--db DIR', 'documentation store directory') do |dir|
+      parser.on('-d', '--db DIR', 'documentation store directory (deafult is `.rdoc` or `.yardoc`)') do |dir|
         @store = dir
       end
-    end
+      parser.on('-c', '--use-cache', 'do not regenerate docs, use pre-existing cache') do
+        @use_cache = true
+      end
 
-    #
-    def option_source(parser)
       parser.on('-s', '--source', 'include full source in script documentation') do
-        Shomen.source = true
+        #Shomen.source = true
+        @source = true
       end
       parser.on('-w', '--webcvs URI', 'prefix link to source code') do |uri|
-        Shomen.webcvs = uri
+        #Shomen.webcvs = uri
+        @webcvs = uri
       end
-    end
+      parser.on('-r', '--readme FILE', 'which file to use as main') do |file|
+        @readme = file
+      end
 
-    #
-    def option_force(parser)
+      #parser.on('--save', 'save options for future use') do |markup|
+      #  @save = true
+      #end
+
+      parser.on('--markup TYPE', 'markup type used for comments (rdoc, md, tomdoc)') do |markup|
+        @markup = markup.to_sym
+      end
+
       parser.on('-F', '--force') do
         $FORCE = true
       end
-    end
 
-    #
-    def option_debug(parser)
       parser.on_tail('--debug', 'run with $DEBUG set to true') do
         $DEBUG = true
       end
-    end
-
-    #
-    def option_warn(parser)
-      parser.on_tail('-w', '--warn', 'run with $VERBOSE set to true') do
+      parser.on_tail('--warn', 'run with $VERBOSE set to true') do
         $VERBOSE = true
       end
-    end
 
-    #
-    def option_help(parser)
-      parser.on_tail('--help') do
-        puts parser
-        exit 0
+      parser.on_tail('--help', 'see this help message') do
+        puts parser; exit -1
       end
     end
 
@@ -215,11 +231,8 @@ module Shomen
     def generate_from_yard
       require 'shomen/yard'
 
-      files = @files || []
-      store = @store || '.yardoc'
-
       options = {}
-      options[:files] = files
+      options[:files] = documents
       options[:store] = store
 
       yard = Shomen::YardAdaptor.new(options)
@@ -235,11 +248,8 @@ module Shomen
     def generate_from_rdoc
       require 'shomen/rdoc'
 
-      files = @files || []
-      store = @store || '.rdoc'
-
       options = {}
-      options[:files] = files
+      options[:files] = documents # + scripts
       options[:store] = store
 
       rdoc = Shomen::RDocAdaptor.new(options)
@@ -250,37 +260,56 @@ module Shomen
 
     #
     def preconfigure_yard(*argv)
-      return unless @pre_argv
+      require_yard
 
-      argv = @pre_argv
-
-      argv.unshift('-n')  # do not generate yard documentation
-      argv.unshift('-q')  # supress usual output
+      argv = []
+      argv.concat ["-q"]
+      argv.concat ["-n"]
+      argv.concat ["-b", store]
+      argv.concat ["--markup", markup] if markup
+      argv.concat ["--debug"] if $DEBUG
+      #argv.concat ["--no-save"] #unless save
+      argv.concat scripts
+      #argv.concat documents unless documents.empty?
 
       # clear the registry in memory to remove any previous runs
       YARD::Registry.clear
 
       yard = YARD::CLI::Yardoc.new
+      $stderr.puts('yard ' + argv.join(' ')) if $DEBUG
       yard.run(*argv)
-
-      @files = yard.options[:files].map(&:filename) + yard.files
-      @store = yard.options[:db]
     end
 
     #
     def preconfigure_rdoc
-      return unless @pre_argv
+      require_rdoc
 
-      argv = @pre_argv
-
-      argv.unshift('-q')  # supress usual output
+      argv = []
+      argv.concat ["-q"]
+      argv.concat ["-r"]
+      argv.concat ["-o", store]
+      argv.concat ["--markup", markup] if markup
+      argv.concat ["-D"] if $DEBUG
+      #argv.concat ["--write-options"] #if save
+      argv.concat scripts
+      #argv.concat ['-', *documents] unless documents.empty?
 
       rdoc = ::RDoc::RDoc.new
+      $stderr.puts('rdoc ' + argv.join(' ')) if $DEBUG
       rdoc.document(argv)
-
-      # TODO: can we get files and store from rdoc's parsed options?
     end
 
+    #
+    def require_yard
+      require 'yard'
+    end
+
+    def require_rdoc
+      gem 'rdoc', '>3'
+      require 'rdoc'
+    end
+
+=begin
     #
     # Remove setting options from command line arguments.
     #
@@ -307,6 +336,7 @@ module Shomen
       end
       argv
     end
+=end
 
     #
     def force_encoding(value)
@@ -330,24 +360,3 @@ module Shomen
   end
 
 end
-
-
-=begin
-  def self.cli(*argv)
-    idx = argv.index('rdoc') || argv.index('yard')
-
-    abort "ERROR: must specifiy `rdoc` or `yard`." unless idx
-
-    cmd = argv[idx]
-    case cmd
-    when 'rdoc'
-      shomen_options = argv[0...idx]
-      parser_command = argv[idx..-1]
-      CLI::RDocCommand.cli(*shomen_options).run(*parser_command)
-    when 'yard'
-      shomen_options = argv[0...idx]
-      parser_command = argv[idx..-1]
-      CLI::YARDCommand.cli(*shomen_options).run(*parser_command)
-    end
-  end
-=end
