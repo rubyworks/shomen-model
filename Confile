@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-profile :cov do
+config :qed, :cov do
   require 'simplecov'
   SimpleCov.start do
     coverage_dir 'log/coverage'
