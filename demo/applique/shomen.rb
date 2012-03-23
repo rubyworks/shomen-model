@@ -1,8 +1,6 @@
 require 'shomen/cli'
 require 'stringio'
 
-#parser = ENV['parser'] || 'rdoc'
-
 #Before :all do
   if not File.exist?('.ruby')
     dotruby = "---\nname: example\n"
@@ -19,16 +17,17 @@ end
 When 'Running the script through shomen via (((\w+)))' do |parser|
   output = ''
   $stdout = StringIO.new(output,'w+')
-  Shomen.cli(parser, '--format', 'yaml', @file)
+  Shomen.cli("--#{parser}", '--yaml', @file)
   $stdout.close
   @shomen = YAML.load(output)
 end
 
 When 'Running the script through shomen command line' do
   parser = ENV['parser'] || 'rdoc'
+
   output = ''
   $stdout = StringIO.new(output,'w+')
-  Shomen.cli(parser, '--format', 'yaml', @file)
+  Shomen.cli("--#{parser}", '--yaml', @file)
   $stdout.close
   @shomen = YAML.load(output)
 end

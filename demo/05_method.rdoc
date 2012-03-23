@@ -254,7 +254,7 @@ The interfaces list will have only one entry.
 
 Lets get a closer look at this signature.
 
-    signature = example['interfaces'].first
+    signature = example['interfaces'].last
 
 The signature itself should match the literal definition.
 

@@ -232,8 +232,10 @@ module Shomen
       require 'shomen/yard'
 
       options = {}
-      options[:files] = documents
-      options[:store] = store
+      options[:files]  = documents
+      options[:store]  = store
+      options[:webcvs] = webcvs
+      options[:source] = source
 
       yard = Shomen::YardAdaptor.new(options)
       yard.generate
@@ -249,8 +251,10 @@ module Shomen
       require 'shomen/rdoc'
 
       options = {}
-      options[:files] = documents # + scripts
-      options[:store] = store
+      options[:files]  = documents # + scripts
+      options[:store]  = store
+      options[:webcvs] = webcvs
+      options[:source] = source
 
       rdoc = Shomen::RDocAdaptor.new(options)
       rdoc.generate

@@ -22,22 +22,14 @@ module Shomen
   #
   class RDocAdaptor
 
-    # The hash object that is used to store the generated 
-    # documentation.
-    attr :table
-
-    #
-    attr :store
-
-    #
-    attr :files
-
     # New adaptor.
     def initialize(options)
       initialize_rdoc
 
-      @store = options[:store] || '.rdoc'
-      @files = options[:files] || ['README*']  #['lib', 'README*']
+      @store  = options[:store] || '.rdoc'
+      @files  = options[:files] || ['README*']  #['lib', 'README*']
+      @webcvs = options[:webcvs]
+      @source = options[:source]
     end
 
     #
@@ -48,6 +40,27 @@ module Shomen
       #require 'rdoc/ri'
       #require 'rdoc/markup'
       require 'shomen/rdoc/extensions'
+    end
+
+    # The hash object that is used to store the generated 
+    # documentation.
+    attr :table
+
+    #
+    attr :store
+
+    #
+    attr :files
+
+    #
+    attr :webcvs
+
+    #
+    attr :source
+
+    #
+    def source?
+      @soruce
     end
 
     # Generate the shomen data structure.
@@ -352,12 +365,12 @@ module Shomen
 
       # http://github.com/rubyworks/qed/blob/master/ lib/qed.rb
 
-      if Shomen.source?
+      if source?
         model.source   = File.read(absolute_path) #file.comment
         model.language = mime_type(absolute_path)
       end
 
-      webcvs = project_metadata['webcvs'] || Shomen.webcvs
+      webcvs = project_metadata['webcvs'] || webcvs
       if webcvs
         model.uri      = File.join(webcvs, model.path)  # TODO: use open-uri ?
         model.language = mime_type(absolute_path)

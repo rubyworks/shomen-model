@@ -12,6 +12,21 @@ module Shomen
   #
   class YardAdaptor
 
+    # New adaptor.
+    def initialize(options)
+      initialize_yard
+
+      @store  = options[:store] || '.yardoc'
+      @files  = options[:files] || ['lib', 'README*']
+      @webcvs = options[:webcvs]
+      @source = options[:source]
+    end
+
+    #
+    def initialize_yard
+      require 'yard'
+    end
+
     # The hash object that is used to store the generated 
     # documentation.
     attr :table
@@ -22,17 +37,15 @@ module Shomen
     #
     attr :files
 
-    # New adaptor.
-    def initialize(options)
-      initialize_yard
-
-      @store = options[:store] || '.yardoc'
-      @files = options[:files] || ['lib', 'README*']
-    end
+    #
+    attr :webcvs
 
     #
-    def initialize_yard
-      require 'yard'
+    attr :source
+
+    #
+    def source?
+      @soruce
     end
 
     # Generate the shomen data structure.
@@ -348,12 +361,12 @@ module Shomen
       model.name  = File.basename(absolute_path)
       model.mtime = File.mtime(absolute_path)
 
-      if Shomen.source?
+      if source?
         model.source   = File.read(absolute_path) #file.comment
         model.language = mime_type(absolute_path)
       end
 
-      webcvs = project_metadata['webcvs'] || Shomen.webcvs
+      webcvs = project_metadata['webcvs'] || webcvs
       if webcvs
         model.uri      = File.join(webcvs, model.path)
         model.language = mime_type(absolute_path)
