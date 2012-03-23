@@ -1,6 +1,6 @@
 ---
 source:
-- var
+- meta
 authors:
 - name: trans
   email: transfire@gmail.com
@@ -52,4 +52,4 @@ description: ! "Shomen defines a standard API documentaiton format for object-or
   software\n(Ruby programs in particular) which can be used by documentation interfaces,
   \ne.g. Hypervisor, to render API documentation."
 organization: rubyworks
-date: '2012-03-06'
+date: '2012-03-23'

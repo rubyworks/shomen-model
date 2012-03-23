@@ -7,6 +7,7 @@ lib/shomen/cli/abstract.rb
 lib/shomen/cli/rdoc.rb
 lib/shomen/cli/yard.rb
 lib/shomen/cli.rb
+lib/shomen/config.rb
 lib/shomen/core_ext/hash.rb
 lib/shomen/metadata.rb
 lib/shomen/model/abstract.rb
@@ -23,6 +24,7 @@ lib/shomen/rdoc/extensions.rb
 lib/shomen/rdoc.rb
 lib/shomen/server.rb
 lib/shomen/yard.rb
+lib/shomen.rb
 lib/shomen.yml
 LICENSE.txt
 HISTORY.md
