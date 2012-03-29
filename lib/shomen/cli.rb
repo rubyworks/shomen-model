@@ -1,6 +1,7 @@
 module Shomen
 
   require 'optparse'
+  require 'shomen/generator'
 
   #
   def self.cli(*argv)
