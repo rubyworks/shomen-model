@@ -90,7 +90,7 @@ module Shomen
     end
 
     #
-    alias to_s product_format
+    alias to_s produce_format
 
     #
     def produce_yaml
