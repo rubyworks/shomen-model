@@ -140,6 +140,27 @@ module Shomen
       end
     end
 
+    #
+    def force?
+      $FORCE
+    end
+
+    #
+    # Is this a project directory?
+    #
+    # Returns true or false.
+    #
+    def root?
+      root = false
+      root = true if File.exist?('.ruby')
+      root = true if File.exist?('.yardoc')
+      root = true if File.exist?('.rdoc')
+      root = true if File.exist?('.git')
+      root = true if File.exist?('.hg')
+      root = true if File.exist?('_darcs')
+      root
+    end
+
   end
 
 end
