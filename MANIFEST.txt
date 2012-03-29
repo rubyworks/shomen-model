@@ -2,13 +2,13 @@
 .ruby
 .yardopts
 bin/shomen
-bin/shomen-server
 lib/shomen/cli/abstract.rb
 lib/shomen/cli/rdoc.rb
 lib/shomen/cli/yard.rb
 lib/shomen/cli.rb
 lib/shomen/config.rb
 lib/shomen/core_ext/hash.rb
+lib/shomen/generator.rb
 lib/shomen/metadata.rb
 lib/shomen/model/abstract.rb
 lib/shomen/model/attribute.rb
@@ -22,7 +22,6 @@ lib/shomen/model/script.rb
 lib/shomen/model.rb
 lib/shomen/rdoc/extensions.rb
 lib/shomen/rdoc.rb
-lib/shomen/server.rb
 lib/shomen/yard.rb
 lib/shomen.rb
 lib/shomen.yml
