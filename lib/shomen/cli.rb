@@ -66,7 +66,7 @@ module Shomen
 
       parser = OptionParser.new
 
-      options(parser)
+      parser_options(parser)
 
       parser.parse!(argv)
 
@@ -83,7 +83,7 @@ module Shomen
     # parser - Instance of {OptionParser}.
     #
     # Returns nothing.
-    def options(parser)
+    def parser_options(parser)
       parser.on('-Y', '--yard', 'use YARD for parsing') do
         options[:engine] = :yard
       end
