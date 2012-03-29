@@ -35,13 +35,11 @@ module Shomen
       # Full path of script, relative to project root.
       attr_accessor :path
 
-      # TODO: Rename mtime to modified.
-
       # Time stamp when script was last modifed.
-      attr_accessor :mtime
+      attr_accessor :modified
 
-      alias :modified :mtime
-      alias :modified= :mtime=
+      alias :mtime :modified
+      alias :mtime= :modified=
 
       # Time stamp when script was first created.
       attr_accessor :created

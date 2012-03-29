@@ -22,8 +22,22 @@ module Shomen
 
       attr_accessor :path
 
-      attr_accessor :mtime
+      # Time stamp when script was last modifed.
+      attr_accessor :modified
 
+      alias :mtime :modified
+      alias :mtime= :modified=
+
+      # Time stamp when script was first created.
+      attr_accessor :created
+
+      alias :ctime :created
+      alias :ctime= :created=
+
+      # Source code URI.
+      attr_accessor :uri
+
+      #
       attr_accessor :text
 
       # Format of comment (rdoc, markdown or plain).

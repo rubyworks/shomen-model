@@ -15,6 +15,8 @@ module Shomen
     GEMSPEC_PATTERN = '{.gemspec,*.gemspec}'
 
     #
+    # Initialize new Metadata instance.
+    #
     def initialize
       @data = (
         data = {}

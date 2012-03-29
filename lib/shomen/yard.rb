@@ -258,7 +258,7 @@ module Shomen
       model.returns = (
         rtns = []
         yard_method.tags(:return).each do |tag|
-          tag.types.each do |t|
+          tag.types.to_a.each do |t|
             rtns << {'type'=>t, 'comment'=>tag.text}
           end
         end
@@ -340,9 +340,15 @@ module Shomen
 
       model.path   = yard_document.to_s
       model.name   = File.basename(absolute_path)
-      model.mtime  = File.mtime(absolute_path)
+      model.mtime  = File.ctime(absolute_path)
+      model.ctime  = File.mtime(absolute_path)
       model.text   = File.read(absolute_path)
       model.format = mime_type(absolute_path)
+
+      webcvs = project_metadata['webcvs'] || webcvs
+      if webcvs
+        model.uri = File.join(webcvs, model.path)
+      end
 
       @table['/'+model.path] = model.to_h
     end
@@ -359,6 +365,7 @@ module Shomen
 
       model.path  = yard_script.to_s
       model.name  = File.basename(absolute_path)
+      model.ctime = File.ctime(absolute_path)
       model.mtime = File.mtime(absolute_path)
 
       if source?

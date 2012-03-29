@@ -11,14 +11,14 @@ module Shomen
   # There's a bit of a limitation with adding scripts to the Shomen
   # table, as it appears rdoc only keeps track of script files for methods.
   # So any file thet doesn't contain at least one method definition won't
-  # show up. Well, see if we can fix this in a future version.
+  # show up. We'll see if we can fix this in a future version.
   #
   # In addition, documentation files are not tracked at all, so they have
   # to provided on the command line regardless --though by default any
   # README file will be included.
   #
   # WARNING: RDoc's RI::Store has some issues and presently some information
-  # is not accessible that otherwise would be include.
+  # is not accessible that otherwise would be included.
   #
   class RDocAdaptor
 
