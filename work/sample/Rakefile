@@ -3,14 +3,20 @@
 # Generate Samples
 
 desc "generate doc.json using RDoc"
-task :rdoc do
+task 'rdoc' do
+  #sh 'shomen rdoc -u "https://github.com/rubyworks/shomen/blob/master/work/sample" -m README README lib'
+  sh 'rdoc -f shomen -T "Fish Sampler" -m README lib [A-Z]*.*'
+end
+
+desc "generate doc.json using shomen rdoc"
+task 'shomen:rdoc' do
   #sh "shomen rdoc -T 'Fish Sampler' -m README README lib"
   #sh 'shomen rdoc -u "https://github.com/rubyworks/shomen/blob/master/work/sample" -m README README lib'
   sh 'shomen rdoc -m README lib [A-Z]*.*'
 end
 
-desc "generate doc.json using YARD"
-task :yard do
+desc "generate doc.json using shoment yard"
+task 'shomen:yard' do
   sh 'shomen yard --readme README lib - [A-Z]*.*'
 end
 
