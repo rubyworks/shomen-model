@@ -18,11 +18,13 @@ module Shomen
   # README file will be included.
   #
   # WARNING: RDoc's RI::Store has some issues and presently some information
-  # is not accessible that otherwise would be included.
+  # is not accessible that otherwise would be included. B/c of this we recommend
+  # using the traditional `rdoc-shomen` generator instead until these issues
+  # are resolved.
   #
   class RDocAdaptor
 
-    # New adaptor.
+    # Initialize new RDoc adaptor.
     def initialize(options)
       initialize_rdoc
 
@@ -32,9 +34,13 @@ module Shomen
       @source = options[:source]
     end
 
+    # Load RDoc library. Must be RDoc v3 or greater. We invoke the `gem` method
+    # in this method in order to ensure we are not using the rdoc library included
+    # with the Ruby distribution, which is out of date.
     #
+    # Returns nothing.
     def initialize_rdoc
-      gem 'rdoc', '>3'
+      gem 'rdoc', '>3'  # rescue nil
 
       require 'rdoc'
       #require 'rdoc/ri'
@@ -44,26 +50,41 @@ module Shomen
 
     # The hash object that is used to store the generated 
     # documentation.
+    #
+    # Returns documentation table. [Hash]
     attr :table
 
+    # Location to of RDoc documentation cache. This defaults to `.rdoc` which is
+    # where RDoc normally places it's generated documentation files.
     #
+    # Returns String path to RDoc documentation cache.
     attr :store
 
+    # Files to be documented.
     #
+    # Returns Array of file paths.
     attr :files
 
+    # URI prefix which can be used to link to online documentation.
     #
+    # Returns String.
     attr :webcvs
 
+    # Include source code in scripts?
     #
+    # Returns true/false.
     attr :source
 
+    # Include source code in scripts?
     #
+    # Returns true/false.
     def source?
       @soruce
     end
 
     # Generate the shomen data structure.
+    #
+    # Returns Hash of documentation table.
     def generate
       if not File.exist?(store)
         $stderr.puts "ERROR: RDoc store not found -- '#{store}`."
@@ -142,12 +163,16 @@ module Shomen
 
   private
 
+    # Project metadata.
     #
+    # Returns Metadata instance.
     def project_metadata
       @project_metadata ||= Shomen::Metadata.new
     end
 
     # Collect files given list of +globs+.
+    #
+    # Returns Array of files.
     def collect_files
       globs = @files
       globs = globs.map{ |glob| Dir[glob] }.flatten.uniq
@@ -166,35 +191,38 @@ module Shomen
 
     # Generate project metadata entry.
     #
-    # @return [Hash] metadata added to the documentation table
+    # Returns Hash of metadata, as added to the documentation table
     def generate_metadata
       #project_metadata = Metadata.new
       @table['(metadata)'] = project_metadata.to_h
     end
 
-    #
-    #def project_metadata
-    #  @project_metadata ||= Shomen::Metadata.new
-    #end
-
     # Add constant to table.
-    def generate_constant(rdoc)
-      debug_msg "  #{rdoc.name}"
+    #
+    # rdoc_constant - RDoc constant documentation object.
+    #
+    # Returns Hash for constant documentation entry.
+    def generate_constant(rdoc_constant)
+      debug_msg "  #{rdoc_constant.name}"
 
       model = Shomen::Model::Constant.new
 
-      model.path      = rdoc.parent.full_name + '::' + rdoc.name
-      model.name      = rdoc.name
-      model.namespace = rdoc.parent.full_name
-      model.comment   = comment(rdoc.comment)
+      model.path      = rdoc_constant.parent.full_name + '::' + rdoc_constant.name
+      model.name      = rdoc_constant.name
+      model.namespace = rdoc_constant.parent.full_name
+      model.comment   = comment(rdoc_constant.comment)
       model.format    = 'rdoc'  # or tomdoc ?
-      model.value     = rdoc.value
-      model.files     = ["/#{rdoc.file.full_name}"]
+      model.value     = rdoc_constant.value
+      model.files     = ["/#{rdoc_constant.file.full_name}"]
 
       @table[model.path] = model.to_h
     end
 
     # Add classes (and modules) to table.
+    #
+    # rdoc_class - RDoc class documentation object.
+    #
+    # Returns Hash of class or module documentation entry.
     def generate_class(rdoc_class)
       debug_msg "  %s" % [ rdoc_class.full_name ]
 
@@ -248,9 +276,13 @@ module Shomen
       @table[model.path] = model.to_h
     end
 
-    # Transform RDoc methods to Shomen model and add to table.
+    # TODO: How to get literal interface separate from call-sequences?
+
+    # Transform RDoc method to Shomen model and add to table.
     #
-    # TODO: How to get literal interface separate from call-sequnces?
+    # rdoc_method - RDoc method documentation object.
+    #
+    # Returns Hash of method documentation entry.
     def generate_method(rdoc_method)
       #list = methods_all + attributes_all
 
@@ -300,6 +332,10 @@ module Shomen
     # TODO: remove any trailing comment from interface
 
     # Parse method interface.
+    #
+    # interface - String representation of method interface.
+    #
+    # Returns Hash entry of method interface.
     def parse_interface(interface)
       args, block = [], {}
 
@@ -330,6 +366,10 @@ module Shomen
     end
 
     # Generate entries for information files, e.g. `README.rdoc`.
+    #
+    # rdoc_document - RDoc file documentation object.
+    #
+    # Returns Hash of document entry.
     def generate_document(rdoc_document)
       relative_path = (String === rdoc_document ? rdoc_document : rdoc_document.full_name)
       absolute_path = File.join(path_base, relative_path)
@@ -348,6 +388,10 @@ module Shomen
     # TODO: Add loadpath and make file path relative to it?
 
     # Generate script entries.
+    #
+    # rdoc_file - RDoc file documentation object.
+    #
+    # Returns Hash of script entry.
     def generate_script(rdoc_file)
       #debug_msg "Generating file documentation in #{path_output_relative}:"
       #templatefile = self.path_template + 'file.rhtml'
@@ -403,6 +447,11 @@ module Shomen
       @table['/'+model.path] = model.to_h
     end
 
+    # Get fully qualified name given +name+ and +namespace+.
+    #
+    # name      - String of name.
+    # namespace - String of namespace.
+    #
     # Returns String of fully qualified name.
     def complete_name(name, namespace)
       if name !~ /^#{namespace}/
@@ -412,7 +461,11 @@ module Shomen
       end
     end
 
+    # Get full method name.
     #
+    # method - Method instance.
+    #
+    # Returns String of methods full name.
     def method_name(method)
       return nil if method.nil?
       if method.singleton
@@ -424,13 +477,22 @@ module Shomen
     end
 
     # Convert rdoc object comment into RDoc text.
+    #
+    # document - RDoc document object.
+    #
+    # Returns String of comment text.
     def comment(document)
       formatter = RDoc::Markup::ToRdoc.new
       text = document.accept(formatter)
       text.strip
     end
 
+    # Determine mime-type by file extension. If a type can not be determined,
+    # then returns `text/plain` type.
     #
+    # path - String file path.
+    #
+    # Returns String of mime-type.
     def mime_type(path)
       case File.extname(path)
       when '.rb', '.rbx' then 'text/ruby'
@@ -442,7 +504,10 @@ module Shomen
     end
 
     # Output progress information if rdoc debugging is enabled
-
+    #
+    # msg - String debug message.
+    #
+    # Returns nothing.
     def debug_msg(msg)
       return unless $DEBUG_RDOC
       case msg[-1,1]
@@ -453,7 +518,9 @@ module Shomen
       $stderr.puts(tab + msg)
     end
 
+    # Current working directory.
     #
+    # Returns String of working directory.
     def path_base
       Dir.pwd
     end
@@ -461,6 +528,8 @@ module Shomen
   end
 
 end
+
+
 
 
 =begin

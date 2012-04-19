@@ -4,37 +4,37 @@ module Shomen
   #
   module Configurable
 
+    # Public: Include raw source code in documentation?
     #
-    # Include raw source code in documentation?
-    #
+    # Returns true/false.
     def source?
       @source
     end
 
-    #
-    # Set source configuration to `true` if documentation should include
+    # Public: Set source configuration to `true` if documentation should include
     # full source code. Generally, this is a bad idea since it will make
     # the generated file rather huge. But for small projects it may be a
     # prefectly good choice. For large projects a better approach is to
     # provide a `webcvs` URI.
     #
+    # Returns true/false.
     def source=(bool)
-      @source = bool
+      @source = !!bool
     end
 
-    #
-    # URI that can be used to link documentation to on-line
+    # Public: URI that can be used to link documentation to on-line
     # source code browsing.
     #
+    # Returns URI or nil.
     def webcvs
       @webcvs
     end
 
+    # Public: Set the URI for linking to online source code browser.
     #
-    # Set the URI for linking to to on-line source code browser.
-    #
+    # Returns String of URI.
     def webcvs=(uri)
-      @webcvs = uri
+      @webcvs = uri.to_s
     end
 
   end

@@ -3,6 +3,7 @@ module Shomen
   require 'optparse'
   require 'shomen/generator'
 
+  # Public: Convenience method for `CLI.run(*argv)`.
   #
   def self.cli(*argv)
     CLI.run(*argv)
@@ -13,46 +14,43 @@ module Shomen
 
   # The command line interface for generating Shomen documentation.
   #
-  # Usage examples:
+  # Examples:
   #
-  #   $ shomen --yard --readme README.md lib - [A-Z]*.*
+  #     $ shomen --yard --readme README.md lib - [A-Z]*.*
   #
-  #   $ shomen --rdoc -s -r README lib - [A-Z]*.*
+  #     $ shomen --rdoc -s -r README lib - [A-Z]*.*
   #
   class CLI
 
+    # Public: Shortcut for `CLI.new(*argv).run`.
     #
-    # Shortcut for `new(*argv).run`.
-    #
+    # Returns nothing.
     def self.run(*argv)
       new(*argv).run
     end
 
-    #
+    # Command line options.
     attr :options
 
-    #
     # Initialize new command.
     #
     # argv - Command line arguments. [Array]
     #
     # Returns CLI instance.
-    #
     def initialize(*argv)
       @options = {}
 
       parse(argv)
     end
 
+    # Public: Run command.
     #
-    # Run command line.
-    #
+    # Returns nothing.
     def run
       generator = Generator.new(options)
       $stdout.puts generator
     end
 
-    #
     # Parse command line arguments.
     #
     # argv - List of command line arguments. [Array]
@@ -141,16 +139,16 @@ module Shomen
       end
     end
 
+    # Is `$FORCE` set?
     #
+    # Returns true or false.
     def force?
-      $FORCE
+      !!$FORCE
     end
 
-    #
     # Is this a project directory?
     #
     # Returns true or false.
-    #
     def root?
       root = false
       root = true if File.exist?('.ruby')

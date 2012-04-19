@@ -5,69 +5,67 @@ module Shomen
   require 'yaml'
   require 'json'
 
-  # Generates Shomen document for any given library.
+  require 'shomen/metadata'
+  require 'shomen/model'
+
+  # Shared base class that can be used by generators.
   #
   class Generator
 
-    #
     # Default output format is JSON.
-    #
     DEFAULT_FORMAT = 'json'
 
+    # Is `$FORCE` set?
     #
-    def force?; $FORCE; end
+    # Return true/false.
+    def force?
+      $FORCE
+    end
 
-    #
-    attr_accessor :engine
-
-    #
+    # Outpu format is eitehr :yaml or :json. The default is :json.
     attr_accessor :format
 
+    # Flag to include full source code in script entries.
     #
+    # Returns true/false.
     attr_accessor :source
 
+    # URI prefix to link to online documentation.
     #
+    # Returns String.
     attr_accessor :webcvs
 
-    #
+    # Name of README file.
     attr_accessor :readme
 
-    #
-    attr_accessor :store
-
-    #
+    # Markup used for comments. This is typically either :rdoc or :markdown.
     attr_accessor :markup
 
-    #
+    # List of scripts to document.
     attr_accessor :scripts
 
-    #
+    # List of "information documents" to document.
     attr_accessor :documents
 
+    # Include source code in scripts?
     #
-    attr_accessor :use_cache
-
-    #
-    def use_cache?
-      @use_cache
+    # Returns true/false.
+    def source?
+      @soruce
     end
 
   private
 
-    #
     # Initialize new generator.
     #
-    # options - Generator options. [Hash]
+    # options - Hash of generator options.
     #
     # Returns Generator instance.
-    #
     def initialize(options)
-      @engine     = (Dir['.yardoc'].first ? :yard : :rdoc)
       @format     = DEFAULT_FORMAT
       @readme     = Dir['README*'].first
       @source     = false
       @use_cache  = false
-      @store      = nil
       @markup     = nil
       @scripts    = []
       @documents  = []
@@ -75,11 +73,12 @@ module Shomen
       options.each do |k,v|
         __send__("#{k}=", v)
       end
-
-      @store ||= (engine == :yard ? '.yardoc' : '.rdoc')
     end
 
+    # Produce documentation in YAML or JSON format depending
+    # on the setting of #format setting.
     #
+    # Returns String of either YAML or JSON.
     def produce_format
       case format.to_sym
       when :yaml
@@ -89,150 +88,42 @@ module Shomen
       end
     end
 
+    # Alias for #produce_format.
     #
+    # Returns String of either YAML or JSON.
     alias to_s produce_format
 
+    # Documentation table in YAML format.
     #
+    # Returns String of YAML.
     def produce_yaml
       produce_table.to_yaml
     end
 
+    # Documentation table in JSON format.
     #
+    # Returns String of JSON.
     def produce_json
       force_encoding(produce_table).to_json
     end
 
+    # Generates documentation table using rdoc or yard 
+    # depending on the `adapter` setting.
     #
+    # Returns documentation table. [Hash]
     def produce_table
-      case engine.to_sym
-      when :yard
-        run_yard
-      else
-        run_rdoc
-      end
+      generate
     end
 
+    # Project metadata.
     #
-    # Generate with RDoc as backend processor.
-    #
-    def run_rdoc
-      preconfigure_rdoc unless use_cache?
-      generate_from_rdoc     
+    # Returns Metadata instance.
+    def project_metadata
+      @project_metadata ||= Shomen::Metadata.new
     end
 
-    #
-    # Generate with YARD as backend processor.
-    #
-    def run_yard
-      preconfigure_yard unless use_cache?
-      generate_from_yard
-    end
 
-    # TODO: what about reading options from .yardopts ?
-    #       also yard.options[:yardopts] ?
 
-    #
-    # Generate documentatin use YARD.
-    #
-    # Returns documentation table. [Hash]
-    #
-    def generate_from_yard
-      require 'shomen/yard'
-
-      options = {}
-      options[:files]  = documents
-      options[:store]  = store
-      options[:webcvs] = webcvs
-      options[:source] = source
-
-      yard = Shomen::YardAdaptor.new(options)
-      yard.generate
-
-      return yard.table
-    end
-
-    # TODO: what about reading options from .document ?
-    #       also rdoc.options[:document] ?
-
-    #
-    # Generate documentation from RDoc.
-    #
-    # Returns documentation table. [Hash]
-    #
-    def generate_from_rdoc
-      require 'shomen/rdoc'
-
-      options = {}
-      options[:files]  = documents # + scripts
-      options[:store]  = store
-      options[:webcvs] = webcvs
-      options[:source] = source
-
-      rdoc = Shomen::RDocAdaptor.new(options)
-      rdoc.generate
-
-      return rdoc.table
-    end
-
-    #
-    # Preconfigure YARD.
-    #
-    def preconfigure_yard
-      require_yard
-
-      argv = []
-      argv.concat ["-q"]
-      argv.concat ["-n"]
-      argv.concat ["-b", store]
-      argv.concat ["--markup", markup] if markup
-      argv.concat ["--debug"] if $DEBUG
-      #argv.concat ["--no-save"] #unless save
-      argv.concat scripts
-      #argv.concat documents unless documents.empty?
-
-      # clear the registry in memory to remove any previous runs
-      YARD::Registry.clear
-
-      yard = YARD::CLI::Yardoc.new
-      $stderr.puts('yard ' + argv.join(' ')) if $DEBUG
-      yard.run(*argv)
-    end
-
-    #
-    # Preconfigure RDoc.
-    #
-    def preconfigure_rdoc
-      require_rdoc
-
-      argv = []
-      argv.concat ["-q"]
-      argv.concat ["-r"]
-      argv.concat ["-o", store]
-      argv.concat ["--markup", markup] if markup
-      argv.concat ["-D"] if $DEBUG
-      #argv.concat ["--write-options"] #if save
-      argv.concat scripts
-      #argv.concat ['-', *documents] unless documents.empty?
-
-      rdoc = ::RDoc::RDoc.new
-      $stderr.puts('rdoc ' + argv.join(' ')) if $DEBUG
-      rdoc.document(argv)
-    end
-
-    #
-    # Require YARD library.
-    #
-    def require_yard
-      require 'yard'
-    end
-
-    #
-    # Require RDoc library.
-    #
-    def require_rdoc
-      gem 'rdoc', '>3'
-      require 'rdoc'
-    end
 
 =begin
     #
@@ -263,9 +154,11 @@ module Shomen
     end
 =end
 
+    # Force encoding to UTF-8.
     #
-    # Force encoding.
+    # value - Common core object.
     #
+    # Returns object with values encoded to UTF-8.
     def force_encoding(value)
       case value
       when Time,Date

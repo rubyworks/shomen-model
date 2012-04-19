@@ -6,7 +6,7 @@ if RUBY_VERSION > '1.9'
   require_relative 'model/class'
   require_relative 'model/method'
   require_relative 'model/attribute'
-#  require_relative 'model/function'
+# require_relative 'model/function'
   require_relative 'model/constant'
 else
   require 'shomen/model/abstract'
@@ -16,6 +16,6 @@ else
   require 'shomen/model/class'
   require 'shomen/model/method'
   require 'shomen/model/attribute'
-#  require 'shomen/model/function'
+# require 'shomen/model/function'
   require 'shomen/model/constant'
 end

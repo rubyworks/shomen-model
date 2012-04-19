@@ -51,7 +51,7 @@ module Shomen
         #end
 
         #argv.unshift('-n')  # do not generate yard documentation
-        argv.unshift('-q')  # supress yard's usual output
+        argv.unshift('-q')  # supress usual output
 
         #tmpdir = File.join(Dir.tmpdir, 'shomen-rdoc')  # '/dev/null'
         #main   = Dir.glob('{README.*,README}').first

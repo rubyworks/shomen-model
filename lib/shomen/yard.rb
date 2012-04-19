@@ -22,33 +22,47 @@ module Shomen
       @source = options[:source]
     end
 
+    # Require YARD library.
     #
+    # Returns nothing.
     def initialize_yard
       require 'yard'
     end
 
     # The hash object that is used to store the generated 
     # documentation.
+    #
+    # Returns Hash of documentation table.
     attr :table
 
+    # The location YARD documentation cache. The default is `.yardoc`.
     #
+    # Returns String.
     attr :store
 
+    # The files to document.
     #
+    # Returns Array of String of file paths.
     attr :files
 
-    #
+    # Returns String of URI prefix for linking to online source code.
     attr :webcvs
 
+    # Whether to include full source code in script entries.
     #
+    # Returns true/false.
     attr :source
 
+    # Wheter to include full source code in script entries.
     #
+    # Returns true/false.
     def source?
       @soruce
     end
 
     # Generate the shomen data structure.
+    #
+    # Returns Hash of documentation table.
     def generate
       if not File.exist?(store)
         $stderr.puts "ERROR: YARD database not found -- '#{store}`."
@@ -103,12 +117,16 @@ module Shomen
 
   private
 
+    # Project metadata.
     #
+    # Returns Metadata instance.
     def project_metadata
       @project_metadata ||= Shomen::Metadata.new
     end
 
     # Collect files given list of +globs+.
+    #
+    # Returns Array of files.
     def collect_files
       globs = @files
       globs = globs.map{ |glob| Dir[glob] }.flatten.uniq
@@ -127,19 +145,20 @@ module Shomen
 
     # Generate project metadata entry.
     #
-    # @return [Hash] metadata added to the documentation table
+    # Returns Hash of metadata added to the documentation table.
     def generate_metadata
       metadata = Metadata.new
 
       @table['(metadata)'] = metadata.to_h
     end
 
-    # Generate a class or module structure.
+    # Generate a class or module structure. Note that as to whether `methods`
+    # also contains the accessor methods listed in `accessors` is left to
+    # YARD to determine.
     #
-    # @note As to whether `methods` also contains the accessor methods
-    #   listed in `accessors` is left to YARD to determine.
-    #   
-    # @return [Hash] class data that has been placed in the table
+    # yard_class - YARD class documentation object.
+    #
+    # Returns Hash of class data that has been placed in the table
     def generate_class(yard_class)
       debug_msg(yard_class.path.to_s)
 

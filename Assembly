@@ -11,6 +11,9 @@ github:
 gem:
   active : true
 
+qed:
+  files: spec
+
 dnote:
   labels: ~
   title: Source Notes
