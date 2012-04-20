@@ -6,19 +6,7 @@ authors:
   email: transfire@gmail.com
 copyrights: []
 requirements:
-- name: qed
-  groups:
-  - test
-  development: true
-- name: ae
-  groups:
-  - test
-  development: true
 - name: detroit
-  groups:
-  - build
-  development: true
-- name: fire
   groups:
   - build
   development: true

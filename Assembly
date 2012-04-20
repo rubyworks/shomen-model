@@ -11,8 +11,8 @@ github:
 gem:
   active : true
 
-qed:
-  files: spec
+#qed:
+#  files: spec
 
 dnote:
   labels: ~
