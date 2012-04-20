@@ -1,7 +1,5 @@
 module Shomen
 
-  require 'shomen/core_ext/hash'
-
   module Model
 
     # Base class for all model classes.

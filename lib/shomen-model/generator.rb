@@ -5,8 +5,8 @@ module Shomen
   require 'yaml'
   require 'json'
 
-  require 'shomen/metadata'
-  require 'shomen/model'
+  #require 'shomen-model/metadata'
+  #require 'shomen-model'
 
   # Shared base class that can be used by generators.
   #

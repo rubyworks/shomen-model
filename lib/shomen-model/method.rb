@@ -2,9 +2,6 @@ module Shomen
 
   module Model
 
-    require 'shomen/model/abstract'
-    require 'shomen/model/interface'
-
     #
     class Method < Abstract
 

@@ -2,8 +2,6 @@ module Shomen
 
   module Model
 
-    require 'shomen/model/abstract'
-
     #
     class Module < Abstract
 

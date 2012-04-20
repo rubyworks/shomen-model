@@ -1,7 +1,6 @@
 module Shomen
 
   module Model
-    require 'shomen/model/module'
 
     #
     class Class < Module

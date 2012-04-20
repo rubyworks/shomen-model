@@ -2,8 +2,6 @@ module Shomen
 
   module Model
 
-    require 'shomen/model/method'
-
     #
     class Attribute < Method
       #

@@ -2,8 +2,6 @@ module Shomen
 
   module Model
 
-    require 'shomen/model/document'
-
     #
     class Script < Document
       #
