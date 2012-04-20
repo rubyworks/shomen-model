@@ -75,6 +75,8 @@ module Shomen
       end
     end
 
+  public
+
     # Produce documentation in YAML or JSON format depending
     # on the setting of #format setting.
     #
@@ -122,7 +124,7 @@ module Shomen
       @project_metadata ||= Shomen::Metadata.new
     end
 
-
+  private
 
 
 =begin

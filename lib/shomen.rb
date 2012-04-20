@@ -6,7 +6,7 @@
 module Shomen
 end
 
-require 'shomen/config'
 require 'shomen/generator'
+require 'shomen/model'
 require 'shomen/cli'
 
