@@ -1,6 +1,8 @@
 ---
-home: http://rubyworks.github.com/shomen
-docs: http://github.com/rubyworks/shomen/wiki
-code: http://github.com/rubyworks/shomen
-bugs: http://github.com/rubyworks/shomen/issues
+home: http://rubyworks.github.com/shomen-model
+docs: http://rubydoc.info/gems/shomen-model/frames
+code: http://github.com/rubyworks/shomen-model
+bugs: http://github.com/rubyworks/shomen-model/issues
 mail: http://groups.google.com/groups/rubyworks-mailinglist
+chat: http://chat.us.freenode.net/rubyworks
+

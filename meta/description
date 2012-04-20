@@ -1,3 +1,4 @@
 Shomen defines a standard API documentaiton format for object-oriented software
 (Ruby programs in particular) which can be used by documentation interfaces, 
-e.g. Hypervisor, to render API documentation.
+e.g. Hypervisor, to render API documentation. Shomen Model is a set of Ruby
+classes the module this format, and can be used to generate Shomen documentation.

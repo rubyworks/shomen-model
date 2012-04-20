@@ -1,8 +1,5 @@
 ---
-- rdoc 3+
-- yard
-- rack
 - qed     (test)
 - ae      (test)
 - detroit (build)
-- reap    (build)
+- fire    (build)
