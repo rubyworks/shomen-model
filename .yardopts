@@ -1,7 +1,7 @@
 --private
 --protected
--r README.rdoc
+-r README.md
+-t "Shomen Model"
 lib/
 -
 [A-Z]*.*
-log/[A-Z].*

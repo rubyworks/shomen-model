@@ -27,6 +27,7 @@ vclog:
     - log/history.rdoc
     - log/changes.rdoc
 
-mast:
-  active: true
+# has a bug, fix
+#mast:
+#  active: true
 
